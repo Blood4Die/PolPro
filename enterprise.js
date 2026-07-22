@@ -1,4 +1,5 @@
 (function () {
+  const initialDataSnapshot = JSON.stringify(data);
   const todayIso = () => new Date().toISOString().slice(0, 10);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -463,7 +464,7 @@
   });
 
   localStorage.setItem('proje360-data', JSON.stringify(data));
-  if (window.PolProCloud?.enabled) void window.PolProCloud.save(data);
+  if (window.PolProCloud?.enabled && JSON.stringify(data) !== initialDataSnapshot) void window.PolProCloud.save(data);
   renderAll();
   if (currentDetailId && $('#projectDetail').classList.contains('active')) renderProjectDetail();
 })();
