@@ -7,3 +7,10 @@
 a.nav[href="budget-planner.html"] {
   display: none !important;
 }
+
+/* Keep long Supabase e-mail addresses from colliding with the logout button. */
+.sidebar-foot{min-width:0}
+.sidebar-foot>.avatar{flex:0 0 34px}
+.sidebar-foot>div:nth-child(2){flex:1 1 auto;min-width:0}
+.sidebar-foot strong{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-foot>.logout{flex:0 0 auto;margin-left:0}
