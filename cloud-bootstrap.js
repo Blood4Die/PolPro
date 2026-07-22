@@ -1,7 +1,7 @@
 (function () {
   const backend = window.PolatProBackend;
   const appScripts = [
-    'app.js?v=20260722-cloud-1',
+    'app.js?v=20260722-cloud-2',
     'enterprise.js?v=20260722-cloud-1',
     'kedi-kumu-plan.js?v=20260722-cloud-1'
   ];
@@ -44,6 +44,37 @@
     return copy;
   };
 
+  const setCloudStatus = (label, state = '') => {
+    let target = document.querySelector('#cloudSaveStatus');
+    if (!target) {
+      target = document.createElement('span');
+      target.id = 'cloudSaveStatus';
+      target.className = 'role-chip';
+      target.title = 'Supabase otomatik kayıt durumu';
+      document.querySelector('#roleChip')?.after(target);
+    }
+    target.textContent = label;
+    target.dataset.state = state;
+  };
+
+  const downloadConflictRecovery = value => {
+    const savedAt = new Date().toISOString();
+    const payload = JSON.stringify({
+      application: 'PolPro',
+      version: 1,
+      savedAt,
+      reason: 'version-conflict',
+      data: cleanPayload(value)
+    }, null, 2);
+    localStorage.setItem('polpro-conflict-recovery', payload);
+    const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `PolPro-cakisma-kurtarma-${savedAt.slice(0, 19).replaceAll(':', '-')}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  };
+
   const hydrateSignedUrls = async payload => {
     if (!Array.isArray(payload?.files)) return payload;
     await Promise.all(payload.files.map(async file => {
@@ -77,6 +108,7 @@
     let drainPromise = null;
     let conflictShown = false;
     let saveBlocked = false;
+    setCloudStatus('Buluta bağlı', 'ready');
 
     const drain = async () => {
       while (pendingPayload) {
@@ -87,14 +119,18 @@
           version = Number(saved?.version) || version + 1;
           conflictShown = false;
           saveBlocked = false;
+          setCloudStatus('Kaydedildi', 'saved');
         } catch (error) {
           pendingPayload = payload;
           saveBlocked = true;
           const conflict = error?.code === '40001' || /POLPRO_VERSION_CONFLICT/i.test(error?.message || '');
           if (conflict && !conflictShown) {
             conflictShown = true;
-            alert('Başka bir kullanıcı verileri sizden önce güncelledi. Değişikliğiniz sunucuya yazılmadı. Yedek alıp sayfayı yenileyin.');
+            setCloudStatus('Kayıt çakışması', 'conflict');
+            downloadConflictRecovery(payload);
+            alert('Başka bir kullanıcı verileri sizden önce güncelledi. Değişikliğiniz sunucuya yazılmadı ve otomatik kurtarma JSON dosyası indirildi. Güncel verileri almak için sayfayı yenileyin.');
           } else if (!conflict) {
+            setCloudStatus('Kayıt hatası', 'error');
             alert(`Sunucuya kayıt yapılamadı: ${error?.message || error}`);
           }
           break;
@@ -119,6 +155,7 @@
       get version() { return version; },
       save(value) {
         pendingPayload = cleanPayload(value);
+        setCloudStatus('Kaydediliyor...', 'saving');
         return scheduleDrain();
       },
       flush() { return drainPromise || Promise.resolve(); }
@@ -134,6 +171,13 @@
     backend.subscribeAppState(event => {
       const nextVersion = Number(event?.new?.version) || 0;
       if (nextVersion <= version) return;
+      if (event?.new?.updated_by === user.id) {
+        version = nextVersion;
+        setCloudStatus('Kaydedildi', 'saved');
+        return;
+      }
+      if (pendingPayload || drainPromise) return;
+      setCloudStatus('Yeni veri var', 'remote');
       const reload = confirm('PolPro verileri başka bir kullanıcı tarafından güncellendi. Güncel verileri yüklemek için sayfa yenilensin mi?');
       if (reload) location.reload();
     });
