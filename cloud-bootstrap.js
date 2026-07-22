@@ -2,7 +2,7 @@
   const backend = window.PolatProBackend;
   const appScripts = [
     'app.js?v=20260722-cloud-2',
-    'enterprise.js?v=20260722-cloud-1',
+    'enterprise.js?v=20260722-cloud-2',
     'kedi-kumu-plan.js?v=20260722-cloud-1'
   ];
 
