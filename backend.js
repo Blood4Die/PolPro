@@ -52,6 +52,23 @@
       return { ...data, email: authData.user.email || '' };
     },
 
+    async manageAccounts(action, values = {}) {
+      requireClient();
+      const { data, error } = await client.functions.invoke('admin-users', {
+        body: { action, ...values }
+      });
+      if (error) {
+        let message = error.message || 'Kullanıcı yönetimi işlemi başarısız.';
+        try {
+          const details = await error.context?.json?.();
+          if (details?.error) message = details.error;
+        } catch (contextError) {}
+        throw new Error(message);
+      }
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+
     async loadAppState() {
       requireClient();
       const { data, error } = await client
