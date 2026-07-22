@@ -1,0 +1,199 @@
+.brand-lockup{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.polat-logo-crop{
+  position:relative;
+  display:block;
+  width:112px;
+  height:34px;
+  flex:0 0 auto;
+  overflow:hidden;
+  background:#fff;
+  border-radius:5px;
+}
+
+.polat-logo-crop img{
+  position:absolute;
+  width:126px;
+  max-width:none;
+  height:auto;
+  left:-7px;
+  top:-24px;
+}
+
+.brand-divider{
+  display:block;
+  width:2px;
+  height:31px;
+  flex:0 0 2px;
+  border-radius:2px;
+  background:#f5a900;
+}
+
+.product-mark{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.product-mark strong{
+  font-size:18px;
+  line-height:1;
+  letter-spacing:-.35px;
+  color:inherit;
+}
+
+.product-mark small{
+  margin-top:5px;
+  font-size:6px;
+  line-height:1;
+  letter-spacing:1.15px;
+  white-space:nowrap;
+  color:inherit;
+  opacity:.62;
+}
+
+.brand.brand-lockup{
+  width:100%;
+  padding:1px 5px 29px;
+  gap:8px;
+}
+
+.brand .polat-logo-crop{
+  position:relative;
+  display:block;
+  width:104px;
+  height:32px;
+  flex:0 0 104px;
+  padding:0;
+  border-radius:5px;
+  background:#fff;
+}
+
+.brand .polat-logo-crop img{
+  width:117px;
+  left:-6px;
+  top:-22px;
+}
+
+.brand .brand-divider{
+  display:block;
+  width:2px;
+  height:29px;
+  flex:0 0 2px;
+  padding:0;
+  border-radius:2px;
+  background:#f5a900;
+}
+
+.brand .product-mark{
+  display:flex;
+  width:auto;
+  height:auto;
+  min-width:0;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+  color:#fff;
+}
+
+.brand .product-mark strong{
+  font-size:16px;
+}
+
+.brand .product-mark small{
+  font-size:5px;
+  letter-spacing:.75px;
+}
+
+.login-brand.brand-lockup{
+  width:max-content;
+  padding:9px 12px 9px 10px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:10px;
+  background:rgba(255,255,255,.06);
+  box-shadow:0 8px 25px rgba(0,0,0,.12);
+}
+
+.login-brand .polat-logo-crop{
+  position:relative;
+  display:block;
+  width:132px;
+  height:39px;
+  flex:0 0 132px;
+  padding:0;
+  border-radius:5px;
+  background:#fff;
+}
+
+.login-brand .polat-logo-crop img{
+  width:148px;
+  left:-8px;
+  top:-28px;
+}
+
+.login-brand .brand-divider{
+  display:block;
+  width:2px;
+  height:36px;
+  flex:0 0 2px;
+  padding:0;
+  border-radius:2px;
+  background:#f5a900;
+}
+
+.login-brand .product-mark{
+  display:flex;
+  width:auto;
+  height:auto;
+  min-width:0;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+  color:#fff;
+}
+
+.login-brand .product-mark strong{
+  font-size:22px;
+  letter-spacing:-.5px;
+}
+
+.login-brand .product-mark small{
+  font-size:6px;
+  letter-spacing:1.35px;
+}
+
+@media(max-width:430px){
+  .login-brand.brand-lockup{
+    gap:7px;
+    padding:7px 9px 7px 8px;
+  }
+
+  .login-brand .polat-logo-crop{
+    width:112px;
+    height:34px;
+  }
+
+  .login-brand .polat-logo-crop img{
+    width:126px;
+    left:-7px;
+    top:-24px;
+  }
+
+  .login-brand .brand-divider{
+    height:31px;
+  }
+
+  .login-brand .product-mark strong{
+    font-size:18px;
+  }
+
+  .login-brand .product-mark small{
+    font-size:5px;
+    letter-spacing:.9px;
+  }
+}

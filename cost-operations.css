@@ -1,0 +1,92 @@
+.external-cost-summary {
+  border-left: 3px solid #cf4c4c !important;
+}
+
+.direct-labor-summary {
+  border-left: 3px solid #d29a2d !important;
+}
+
+.indirect-labor-summary {
+  border-left: 3px solid #4f7f9f !important;
+}
+
+#costSummary {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.enterprise-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+}
+
+.cost-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cost-type.direct-labor {
+  border: 1px solid #ecd7a7;
+  background: #fff5dc;
+  color: #8b6418;
+}
+
+.cost-type.non-labor {
+  border: 1px solid #dfe2e2;
+  background: #f1f2f2;
+  color: #5a5f60;
+}
+
+.cost-type.indirect-labor {
+  border: 1px solid #cbdde8;
+  background: #edf6fb;
+  color: #3d6d8b;
+}
+
+.cost-scope {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.cost-scope.external {
+  border: 1px solid #e7d8d8;
+  background: #fff2f2;
+  color: #a83d3d;
+}
+
+#costs .table-filters {
+  flex-wrap: wrap;
+}
+
+#costs .table-filters input {
+  flex: 1 1 280px;
+}
+
+#costs .table-filters select {
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
+@media (max-width: 650px) {
+  #costs .table-filters input,
+  #costs .table-filters select {
+    flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  #costSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

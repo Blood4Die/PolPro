@@ -1,0 +1,136 @@
+.supplier-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.supplier-overview article {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.supplier-overview span,
+.supplier-overview strong {
+  display: block;
+}
+
+.supplier-overview span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.supplier-overview strong {
+  margin-top: 5px;
+  font-size: 18px;
+}
+
+.supplier-overview strong small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.supplier-filterbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 230px 180px;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.supplier-filterbar input,
+.supplier-filterbar select {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 10px;
+}
+
+.supplier-rating {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f6f6f4;
+}
+
+.supplier-rating strong {
+  color: #d19a2d;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.supplier-rating span,
+.supplier-rating.unrated strong {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.supplier-work,
+.supplier-review {
+  margin: 11px 0 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f6f7f6;
+  color: #565b5d;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.supplier-review {
+  border-left: 3px solid #d19a2d;
+  background: #fff9ec;
+}
+
+.supplier-evaluation-meta {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 8px;
+  text-align: right;
+}
+
+.supplier-select-with-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.supplier-select-with-add select {
+  margin-top: 0 !important;
+}
+
+.supplier-select-with-add button {
+  min-height: 38px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .supplier-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .supplier-filterbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .supplier-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-select-with-add {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: blob: https://*.supabase.co; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>PolPro — Proje ve Maliyet Yönetimi</title>
+  <link rel="stylesheet" href="styles.css?v=20260720-5">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css?v=20260721-3">
+  <link rel="stylesheet" href="exit.css?v=20260721-1">
+  <link rel="stylesheet" href="project-detail.css?v=20260720-3">
+  <link rel="stylesheet" href="project-layout.css">
+  <link rel="stylesheet" href="production.css">
+  <link rel="stylesheet" href="ui-updates.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="project-images.css">
+  <link rel="stylesheet" href="image-editor.css">
+  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="task-files.css">
+  <link rel="stylesheet" href="cost-operations.css?v=20260721-3">
+  <link rel="stylesheet" href="supplier-evaluation.css?v=20260721-2">
+  <link rel="stylesheet" href="enterprise.css">
+</head>
+<body class="logged-out">
+  <section id="loginScreen" class="login-screen" aria-hidden="false">
+    <div class="login-brand brand-lockup">
+      <span class="polat-logo-crop"><img src="assets/polat-makina-logo.png" alt="Polat Makina"></span>
+      <span class="brand-divider"></span>
+      <span class="product-mark"><strong>PolPro</strong><small>PROJE YÖNETİM SİSTEMİ</small></span>
+    </div>
+    <div class="login-layout">
+      <div class="login-intro"><p class="login-eyebrow">PROFESYONEL PROJE YÖNETİMİ</p><h1>Projeler, ekipler ve bütçeler tek merkezde.</h1><p>Planlamadan maliyet kontrolüne kadar tüm süreçleri güvenli ve yetkili erişimle yönetin.</p><div class="login-features"><span>✓ Rol bazlı erişim</span><span>✓ Gantt ve iş yükü</span><span>✓ Bütçe kontrolü</span></div></div>
+      <form id="loginForm" class="login-card"><div><p class="kicker">GÜVENLİ GİRİŞ</p><h2>Hesabınıza giriş yapın</h2><p>Devam etmek için kurumsal hesabınızı kullanın.</p></div><label>E-posta adresi<input id="loginEmail" type="email" autocomplete="username" required placeholder="ad.soyad@firma.com"></label><label>Şifre<div class="password-wrap"><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Şifrenizi girin"><button type="button" id="togglePassword" aria-label="Şifreyi göster">◉</button></div></label><p id="loginError" class="login-error" role="alert"></p><button class="primary login-button" type="submit">Giriş yap →</button></form>
+    </div>
+  </section>
+  <section id="exitScreen" class="login-screen hidden" hidden aria-live="polite">
+    <div class="login-brand brand-lockup"><span class="polat-logo-crop"><img src="assets/polat-makina-logo.png" alt="Polat Makina"></span><span class="brand-divider"></span><span class="product-mark"><strong>PolPro</strong><small>PROJE YÖNETİM SİSTEMİ</small></span></div>
+    <div class="exit-card"><p class="kicker">GÜVENLİ ÇIKIŞ</p><h1>Sistemden çıkış yapıldı.</h1><p>Bu ekranda açık proje verisi gösterilmiyor.</p><button class="primary" id="reopenApp" type="button">Sistemi yeniden aç</button></div>
+  </section>
+  <aside class="sidebar">
+    <a class="brand brand-lockup" href="#">
+      <span class="polat-logo-crop"><img src="assets/polat-makina-logo.png" alt="Polat Makina"></span>
+      <span class="brand-divider"></span>
+      <span class="product-mark"><strong>PolPro</strong><small>PROJE YÖNETİMİ</small></span>
+    </a>
+    <nav>
+      <button class="nav active" data-page="dashboard">⌂ <span>Genel Bakış</span></button>
+      <button class="nav" data-page="projects">▦ <span>Projeler</span></button>
+      <button class="nav" data-page="planning">⌁ <span>Planlama</span></button>
+      <button class="nav" data-page="costs">₺ <span>Bütçe ve Maliyet</span></button>
+      <button class="nav" data-page="admin">♙ <span>Kullanıcılar</span></button>
+    </nav>
+    <div class="sidebar-foot"><div class="avatar" id="currentAvatar">RY</div><div><strong id="currentName">Recep Yazıcı</strong><small id="currentRole">Kullanıcı</small></div><button id="logoutBtn" class="logout" title="Sistemden çık">Çıkış</button></div>
+  </aside>
+
+  <div class="app">
+    <header class="topbar">
+      <button class="menu" id="menuBtn" aria-label="Menü">☰</button>
+      <div><p class="crumb">ÇALIŞMA ALANI</p><h1 id="pageTitle">Genel Bakış</h1></div>
+      <div class="header-actions"><select id="currencySelect" class="currency-select" title="Gösterim para birimi"><option value="TRY">₺ TL</option><option value="EUR">€ EUR</option><option value="USD">$ USD</option></select><span class="role-chip" id="roleChip">Kullanıcı</span><span class="today" id="today"></span><button class="secondary" id="loadDataFile" type="button">↑ Veri dosyası seç</button><button class="secondary" id="loadBackupFile" type="button">↶ Yedek seç</button><button class="secondary" id="backupDataFile" type="button">⧉ Yedek al</button><button class="secondary" id="saveDataFile" type="button">↓ Verileri kaydet</button><input id="dataFileInput" type="file" accept="application/json,.json" hidden><button class="primary permission-create" id="quickAdd">+ Yeni proje</button></div>
+    </header>
+
+    <main>
+      <section id="dashboard" class="page active">
+        <div class="welcome"><div><h2>Projelerin kontrol altında.</h2><p>İlerleme, yaklaşan işler ve bütçe durumunu tek ekrandan takip et.</p></div><div class="pulse"><i></i> Sistem güncel</div></div>
+        <div class="metrics" id="metrics"></div>
+        <div class="management-summary" id="managementSummary"></div>
+        <div class="dashboard-grid">
+          <article class="panel wide"><div class="panel-head"><div><p class="kicker">PORTFÖY</p><h3>Aktif projeler</h3></div><div class="panel-actions"><select id="dashboardProjectFilter" class="compact-select"><option value="">Tüm projeler</option></select><button class="link" data-go="projects">Tümünü gör →</button></div></div><div id="projectOverview"></div></article>
+          <article class="panel"><div class="panel-head"><div><p class="kicker">BÜTÇE</p><h3>Maliyet dağılımı</h3></div></div><div id="costChart"></div></article>
+          <article class="panel wide"><div class="panel-head"><div><p class="kicker">YAKLAŞAN</p><h3>Öncelikli görevler</h3></div><button class="link" data-go="projects">Projelere git →</button></div><div id="upcomingTasks"></div></article>
+          <article class="panel"><div class="panel-head"><div><p class="kicker">HAREKETLER</p><h3>Son maliyetler</h3></div></div><div id="recentCosts"></div></article>
+          <article class="panel dashboard-gantt-card"><div class="panel-head"><div><p class="kicker">PORTFÖY PLANI</p><h3>Gantt şeması</h3></div><button class="link" data-go="planning">Planlamaya git →</button></div><div id="dashboardGantt" class="dashboard-gantt"></div></article>
+        </div>
+      </section>
+
+      <section id="projects" class="page">
+        <div class="section-tools"><div><h2>Projeler</h2><p>Tüm projelerin kapsam, ilerleme ve bütçe durumu.</p></div><button class="primary" data-open="project">+ Proje ekle</button></div>
+        <div class="project-grid" id="projectGrid"></div>
+      </section>
+
+      <section id="projectDetail" class="page">
+        <button class="back-link" id="backToProjects">← Projelere dön</button>
+        <div id="projectDetailHead" class="detail-hero"></div>
+        <div class="detail-tabs"><button class="active" data-detail-tab="summary">Ana kart</button><button data-detail-tab="tasks">Görevler</button><button data-detail-tab="plan">Gantt</button><button data-detail-tab="costs">Bütçe ve maliyet</button><button data-detail-tab="procurement">Satın alma</button><button data-detail-tab="manufacturing">İmalat</button><button data-detail-tab="risks">Risk ve sorunlar</button><button data-detail-tab="changes">Değişiklikler</button><button data-detail-tab="actions">Toplantı ve aksiyonlar</button><button data-detail-tab="files">Dokümanlar</button><button data-detail-tab="quality">Test ve kabul</button><button data-detail-tab="suppliers">Tedarikçiler</button><button data-detail-tab="closure">Kapanış</button><button data-detail-tab="activity">Geçmiş</button></div>
+        <div id="detailSummary" class="detail-panel active"></div>
+        <div id="detailTasks" class="detail-panel"></div>
+        <div id="detailPlan" class="detail-panel"></div>
+        <div id="detailCosts" class="detail-panel"></div>
+        <div id="detailProcurement" class="detail-panel"></div>
+        <div id="detailManufacturing" class="detail-panel"></div>
+        <div id="detailRisks" class="detail-panel"></div>
+        <div id="detailChanges" class="detail-panel"></div>
+        <div id="detailActions" class="detail-panel"></div>
+        <div id="detailActivity" class="detail-panel"></div>
+        <div id="detailFiles" class="detail-panel"></div>
+        <div id="detailQuality" class="detail-panel"></div>
+        <div id="detailSuppliers" class="detail-panel"></div>
+        <div id="detailClosure" class="detail-panel"></div>
+      </section>
+
+      <section id="tasks" class="page">
+        <div class="section-tools"><div><h2>Görevler</h2><p>Ekip işlerini durumlarına göre yönet.</p></div><button class="primary" data-open="task">+ Görev ekle</button></div>
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <section id="costs" class="page">
+        <div class="section-tools"><div><h2>Maliyetler</h2><p>Proje giderlerini ve şirket genel giderlerini birlikte yönetin.</p></div><button class="primary" data-open="cost">+ Maliyet ekle</button></div>
+        <div class="cost-summary" id="costSummary"></div>
+        <article class="panel table-panel"><div class="table-filters"><input id="costSearch" type="search" placeholder="Maliyet, firma veya kategori ara..."><select id="costProjectFilter"><option value="">Tüm maliyetler</option><option value="external">Proje dışı / Genel gider</option></select><select id="costTypeFilter"><option value="">Tüm maliyet türleri</option><option>Direkt İşçilik</option><option>Endirekt İşçilik</option><option>İşçilik Dışı</option></select><select id="costCategoryFilter"><option value="">Tüm kategoriler</option></select></div><div class="table-wrap"><table><thead><tr><th>Tarih</th><th>Açıklama</th><th>Bağlantı</th><th>Kategori</th><th>Maliyet türü</th><th>Firma / Tedarikçi</th><th class="right">Tutar</th><th></th></tr></thead><tbody id="costTable"></tbody></table></div></article>
+      </section>
+
+      <section id="planning" class="page">
+        <div class="section-tools"><div><h2>Planlama</h2><p>Takvimi, teslim tarihlerini ve ekip iş yükünü izle.</p></div><button class="primary" data-open="task">+ Görev ekle</button></div>
+        <div class="planning-tabs"><button class="active" data-plan-tab="gantt">Gantt görünümü</button><button data-plan-tab="workload">Ekip iş yükü</button><button data-plan-tab="capacity">Kaynak kapasitesi</button></div>
+        <div id="ganttPanel" class="planning-panel active">
+          <article class="panel gantt-panel"><div class="gantt-toolbar"><div><span class="gantt-dot project-dot"></span> Proje <span class="gantt-dot task-dot"></span> Görev <span class="gantt-dot late-dot"></span> Gecikmiş</div><select id="ganttRange"><option value="90">3 ay</option><option value="180" selected>6 ay</option><option value="365">1 yıl</option></select></div><div id="gantt" class="gantt"></div></article>
+        </div>
+        <div id="workloadPanel" class="planning-panel">
+          <div id="workloadMetrics" class="cost-summary"></div>
+          <div id="workloadGrid" class="workload-grid"></div>
+        </div>
+        <div id="capacityPanel" class="planning-panel"><div id="capacityGrid" class="capacity-grid"></div></div>
+      </section>
+
+      <section id="admin" class="page">
+        <div class="section-tools"><div><h2>Kullanıcılar</h2><p>Proje yöneticisi, ekip üyesi ve görev sorumlusu olarak seçilecek kişileri tanımlayın.</p></div><button class="primary" data-open="user">+ Kullanıcı ekle</button></div>
+        <div class="planning-tabs"><button class="active" data-admin-tab="users">Kullanıcılar</button><button data-admin-tab="categories">Kategoriler</button></div>
+        <div id="usersPanel" class="admin-panel active"><div id="userStats" class="cost-summary"></div><div id="userGrid" class="user-grid"></div></div>
+        <div id="categoriesPanel" class="admin-panel"><div class="admin-columns"><article class="panel"><div class="panel-head"><div><p class="kicker">ORGANİZASYON</p><h3>Kullanıcı kategorileri</h3></div><button class="link" id="addCategory">+ Kategori</button></div><div id="categoryList" class="setting-list"></div></article></div></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="entryDialog"><form id="entryForm"><div class="modal-head"><div><p class="kicker" id="modalKicker">YENİ KAYIT</p><h2 id="modalTitle"></h2></div><button type="button" class="icon" id="closeDialog">×</button></div><div id="formFields" class="form-grid"></div><div class="modal-actions"><button type="button" class="secondary" id="cancelDialog">Vazgeç</button><button type="submit" class="primary">Kaydet</button></div></form></dialog>
+  <dialog id="exitDialog"><form><div class="modal-head"><div><p class="kicker">SİSTEMDEN ÇIKIŞ</p><h2>Verileri kaydetmek ister misiniz?</h2></div><button type="button" class="icon" id="cancelExitIcon">×</button></div><p class="exit-question">Kaydet ve çık seçeneği ana veri dosyasını günceller. Tarihli kopyalar yalnızca “Yedek al” düğmesiyle oluşturulur.</p><div class="modal-actions exit-actions"><button type="button" class="secondary" id="cancelExit">Vazgeç</button><button type="button" class="secondary danger-action" id="exitWithoutSave">Kaydetmeden çık</button><button type="button" class="primary" id="saveAndExit">Kaydet ve çık</button></div></form></dialog>
+  <div id="toast" role="status"></div>
+  <script src="config.js?v=20260720-6"></script>
+  <script src="preflight.js?v=20260722-cloud-1"></script>
+  <script src="backend.js?v=20260722-cloud-1"></script>
+  <script src="cloud-bootstrap.js?v=20260722-cloud-1"></script>
+</body>
+</html>
