@@ -263,8 +263,9 @@ async function backupDataToFile(){
 async function applyLoadedData(text){
   const parsed=JSON.parse(text),loaded=parsed?.data||parsed;
   if(!loaded||!Array.isArray(loaded.projects)||!Array.isArray(loaded.tasks)||!Array.isArray(loaded.costs)||!Array.isArray(loaded.users))throw new Error('Geçerli bir PolPro veri dosyası değil.');
-  loaded.users.forEach(user=>{const existing=data.users.find(item=>item.email?.toLocaleLowerCase('tr')===user.email?.toLocaleLowerCase('tr'))||seed.users.find(item=>item.email?.toLocaleLowerCase('tr')===user.email?.toLocaleLowerCase('tr'));if(!user.password&&existing?.password)user.password=existing.password;if(!['Yönetici','Kullanıcı','Görüntüleyici'].includes(user.role))user.role=existing?.role||'Kullanıcı'});
-  if(!loaded.users.some(user=>user.active&&user.password))throw new Error('Veri dosyasında oturum açabilecek kullanıcı yok. Önce bir yönetici hesabı tanımlayın.');
+  const cloudMode=!!window.PolProCloud?.enabled;
+  loaded.users.forEach(user=>{const existing=data.users.find(item=>item.email?.toLocaleLowerCase('tr')===user.email?.toLocaleLowerCase('tr'))||seed.users.find(item=>item.email?.toLocaleLowerCase('tr')===user.email?.toLocaleLowerCase('tr'));if(cloudMode)delete user.password;else if(!user.password&&existing?.password)user.password=existing.password;if(!['Yönetici','Kullanıcı','Görüntüleyici'].includes(user.role))user.role=existing?.role||'Kullanıcı'});
+  if(!cloudMode&&!loaded.users.some(user=>user.active&&user.password))throw new Error('Veri dosyasında oturum açabilecek kullanıcı yok. Önce bir yönetici hesabı tanımlayın.');
   if(!confirm('Mevcut kayıtlar seçilen dosyadaki verilerle değiştirilsin mi?'))return false;
   data=loaded;localStorage.setItem('proje360-data',JSON.stringify(data));if(window.PolProCloud?.enabled)await window.PolProCloud.save(data);lastFileSaveSnapshot=dataFileSnapshot();location.reload();return true
 }
