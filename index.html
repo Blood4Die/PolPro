@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="auth.css?v=20260721-3">
   <link rel="stylesheet" href="exit.css?v=20260721-1">
   <link rel="stylesheet" href="project-detail.css?v=20260720-3">
-  <link rel="stylesheet" href="project-layout.css">
+  <link rel="stylesheet" href="project-layout.css?v=20260722-2">
   <link rel="stylesheet" href="production.css">
   <link rel="stylesheet" href="ui-updates.css">
   <link rel="stylesheet" href="theme.css">
@@ -51,7 +51,6 @@
       <button class="nav active" data-page="dashboard">⌂ <span>Genel Bakış</span></button>
       <button class="nav" data-page="projects">▦ <span>Projeler</span></button>
       <button class="nav" data-page="planning">⌁ <span>Planlama</span></button>
-      <button class="nav" data-page="costs">₺ <span>Bütçe ve Maliyet</span></button>
       <button class="nav" data-page="admin">♙ <span>Kullanıcılar</span></button>
     </nav>
     <div class="sidebar-foot"><div class="avatar" id="currentAvatar">RY</div><div><strong id="currentName">Recep Yazıcı</strong><small id="currentRole">Kullanıcı</small></div><button id="logoutBtn" class="logout" title="Sistemden çık">Çıkış</button></div>
@@ -118,7 +117,7 @@
         <div class="section-tools"><div><h2>Planlama</h2><p>Takvimi, teslim tarihlerini ve ekip iş yükünü izle.</p></div><button class="primary" data-open="task">+ Görev ekle</button></div>
         <div class="planning-tabs"><button class="active" data-plan-tab="gantt">Gantt görünümü</button><button data-plan-tab="workload">Ekip iş yükü</button><button data-plan-tab="capacity">Kaynak kapasitesi</button></div>
         <div id="ganttPanel" class="planning-panel active">
-          <article class="panel gantt-panel"><div class="gantt-toolbar"><div><span class="gantt-dot project-dot"></span> Proje <span class="gantt-dot task-dot"></span> Görev <span class="gantt-dot late-dot"></span> Gecikmiş</div><select id="ganttRange"><option value="90">3 ay</option><option value="180" selected>6 ay</option><option value="365">1 yıl</option></select></div><div id="gantt" class="gantt"></div></article>
+          <article class="panel gantt-panel"><div class="gantt-toolbar"><div><span class="gantt-dot project-dot"></span> Proje <span class="gantt-dot task-dot"></span> Görev <span class="gantt-dot late-dot"></span> Gecikmiş</div><select id="ganttRange"><option value="fit" selected>Tüm dönem</option><option value="180">6 ay</option><option value="365">1 yıl</option><option value="730">2 yıl</option></select></div><div id="gantt" class="gantt"></div></article>
         </div>
         <div id="workloadPanel" class="planning-panel">
           <div id="workloadMetrics" class="cost-summary"></div>
@@ -147,6 +146,6 @@
   <script src="config.js?v=20260720-6"></script>
   <script src="preflight.js?v=20260722-cloud-1"></script>
   <script src="backend.js?v=20260722-cloud-2"></script>
-  <script src="cloud-bootstrap.js?v=20260722-cloud-4"></script>
+  <script src="cloud-bootstrap.js?v=20260722-cloud-5"></script>
 </body>
 </html>
