@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0">
   <title>PolPro — Proje ve Maliyet Yönetimi</title>
   <link rel="stylesheet" href="styles.css?v=20260722-6">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin.css?v=20260722-2">
   <link rel="stylesheet" href="auth.css?v=20260721-3">
   <link rel="stylesheet" href="exit.css?v=20260721-1">
   <link rel="stylesheet" href="project-detail.css?v=20260720-3">
@@ -128,9 +128,14 @@
       </section>
 
       <section id="admin" class="page">
-        <div class="section-tools"><div><h2>Kullanıcılar</h2><p>Proje yöneticisi, ekip üyesi ve görev sorumlusu olarak seçilecek kişileri tanımlayın.</p></div><button class="primary" data-open="user">+ Kullanıcı ekle</button></div>
-        <div class="planning-tabs"><button class="active" data-admin-tab="users">Kullanıcılar</button><button data-admin-tab="categories">Kategoriler</button></div>
-        <div id="usersPanel" class="admin-panel active"><div id="userStats" class="cost-summary"></div><div id="userGrid" class="user-grid"></div></div>
+        <div class="section-tools"><div><h2>Kullanıcı ve personel yönetimi</h2><p>Giriş yetkilerini ve projelerde görevlendirilecek personel kayıtlarını ayrı yönetin.</p></div></div>
+        <div class="planning-tabs"><button class="active" data-admin-tab="accounts">Giriş hesapları</button><button data-admin-tab="users">Personel / kaynaklar</button><button data-admin-tab="categories">Kategoriler</button></div>
+        <div id="accountsPanel" class="admin-panel active">
+          <div class="account-toolbar"><div><h3>Supabase giriş hesapları</h3><p>Uygulamaya giriş yapabilen hesaplar. Yalnızca yöneticiler değiştirebilir.</p></div><button class="primary" id="addLoginAccount">+ Giriş hesabı ekle</button></div>
+          <div id="accountStatus" class="account-status">Hesaplar yükleniyor...</div>
+          <div id="accountStats" class="cost-summary"></div><div id="accountGrid" class="user-grid"></div>
+        </div>
+        <div id="usersPanel" class="admin-panel"><div class="account-toolbar"><div><h3>Personel / kaynaklar</h3><p>Proje lideri, ekip üyesi ve görev sorumlusu olarak seçilecek kişiler.</p></div><button class="primary" data-open="user">+ Personel ekle</button></div><div id="userStats" class="cost-summary"></div><div id="userGrid" class="user-grid"></div></div>
         <div id="categoriesPanel" class="admin-panel"><div class="admin-columns"><article class="panel"><div class="panel-head"><div><p class="kicker">ORGANİZASYON</p><h3>Kullanıcı kategorileri</h3></div><button class="link" id="addCategory">+ Kategori</button></div><div id="categoryList" class="setting-list"></div></article></div></div>
       </section>
     </main>
@@ -141,7 +146,7 @@
   <div id="toast" role="status"></div>
   <script src="config.js?v=20260720-6"></script>
   <script src="preflight.js?v=20260722-cloud-1"></script>
-  <script src="backend.js?v=20260722-cloud-1"></script>
-  <script src="cloud-bootstrap.js?v=20260722-cloud-3"></script>
+  <script src="backend.js?v=20260722-cloud-2"></script>
+  <script src="cloud-bootstrap.js?v=20260722-cloud-4"></script>
 </body>
 </html>
