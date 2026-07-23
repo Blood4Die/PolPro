@@ -3,7 +3,7 @@
   const appScripts = [
     'app.js?v=20260722-cloud-5',
     'enterprise.js?v=20260722-cloud-2',
-    'isg-risk.js?v=20260723-1',
+    'isg-risk.js?v=20260723-2',
     'kedi-kumu-plan.js?v=20260722-cloud-1',
     'account-admin.js?v=20260722-cloud-1'
   ];
