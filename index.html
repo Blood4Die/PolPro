@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="cost-operations.css?v=20260721-3">
   <link rel="stylesheet" href="supplier-evaluation.css?v=20260721-2">
   <link rel="stylesheet" href="enterprise.css">
-  <link rel="stylesheet" href="isg-risk.css?v=20260723-1">
+  <link rel="stylesheet" href="isg-risk.css?v=20260723-2">
 </head>
 <body class="logged-out">
   <section id="loginScreen" class="login-screen" aria-hidden="false">
@@ -86,7 +86,7 @@
       <section id="projectDetail" class="page">
         <button class="back-link" id="backToProjects">← Projelere dön</button>
         <div id="projectDetailHead" class="detail-hero"></div>
-        <div class="detail-tabs"><button class="active" data-detail-tab="summary">Ana kart</button><button data-detail-tab="tasks">Görevler</button><button data-detail-tab="plan">Gantt</button><button data-detail-tab="costs">Bütçe ve maliyet</button><button data-detail-tab="procurement">Satın alma</button><button data-detail-tab="manufacturing">İmalat</button><button data-detail-tab="risks">Risk ve sorunlar</button><button data-detail-tab="ohs">İSG Risk Analizi</button><button data-detail-tab="changes">Değişiklikler</button><button data-detail-tab="actions">Toplantı ve aksiyonlar</button><button data-detail-tab="files">Dokümanlar</button><button data-detail-tab="quality">Test ve kabul</button><button data-detail-tab="suppliers">Tedarikçiler</button><button data-detail-tab="closure">Kapanış</button><button data-detail-tab="activity">Geçmiş</button></div>
+        <div class="detail-tabs"><button class="active" data-detail-tab="summary">Ana kart</button><button data-detail-tab="tasks">Görevler</button><button data-detail-tab="plan">Gantt</button><button data-detail-tab="costs">Bütçe ve maliyet</button><button data-detail-tab="procurement">Satın alma</button><button data-detail-tab="manufacturing">İmalat</button><button data-detail-tab="risks">Risk ve sorunlar</button><button data-detail-tab="ohs">İSG ve Çevre Risk Analizi</button><button data-detail-tab="changes">Değişiklikler</button><button data-detail-tab="actions">Toplantı ve aksiyonlar</button><button data-detail-tab="files">Dokümanlar</button><button data-detail-tab="quality">Test ve kabul</button><button data-detail-tab="suppliers">Tedarikçiler</button><button data-detail-tab="closure">Kapanış</button><button data-detail-tab="activity">Geçmiş</button></div>
         <div id="detailSummary" class="detail-panel active"></div>
         <div id="detailTasks" class="detail-panel"></div>
         <div id="detailPlan" class="detail-panel"></div>
@@ -143,12 +143,12 @@
   </div>
 
   <dialog id="entryDialog"><form id="entryForm"><div class="modal-head"><div><p class="kicker" id="modalKicker">YENİ KAYIT</p><h2 id="modalTitle"></h2></div><button type="button" class="icon" id="closeDialog">×</button></div><div id="formFields" class="form-grid"></div><div class="modal-actions"><button type="button" class="secondary" id="cancelDialog">Vazgeç</button><button type="submit" class="primary">Kaydet</button></div></form></dialog>
-  <dialog id="ohsRiskDialog" class="ohs-dialog"><form id="ohsRiskForm"><div class="modal-head"><div><p class="kicker">İŞ SAĞLIĞI VE GÜVENLİĞİ</p><h2 id="ohsRiskTitle">Yeni İSG risk kaydı</h2><p id="ohsStepText">1 / 4 · Tehlike</p></div><button type="button" class="icon" id="closeOhsRisk">×</button></div><div class="ohs-stepper"><button type="button" class="active" data-ohs-step="0">1. Tehlike</button><button type="button" data-ohs-step="1">2. İlk risk</button><button type="button" data-ohs-step="2">3. Önlem</button><button type="button" data-ohs-step="3">4. Artık risk ve onay</button></div><div id="ohsRiskFields"></div><div class="modal-actions ohs-actions"><button type="button" class="secondary" id="ohsPrevious">Geri</button><span></span><button type="button" class="secondary" id="saveOhsDraft">Taslak kaydet</button><button type="button" class="primary" id="ohsNext">İleri</button></div></form></dialog>
+  <dialog id="ohsRiskDialog" class="ohs-dialog"><form id="ohsRiskForm"><div class="modal-head"><div><p class="kicker">İŞ SAĞLIĞI, GÜVENLİĞİ VE ÇEVRE</p><h2 id="ohsRiskTitle">Yeni İSG / çevre risk kaydı</h2><p id="ohsStepText">1 / 4 · Tehlike / çevresel boyut</p></div><button type="button" class="icon" id="closeOhsRisk">×</button></div><div class="ohs-stepper"><button type="button" class="active" data-ohs-step="0">1. Tehlike / çevresel boyut</button><button type="button" data-ohs-step="1">2. İlk risk</button><button type="button" data-ohs-step="2">3. Önlem</button><button type="button" data-ohs-step="3">4. Artık risk ve onay</button></div><div id="ohsRiskFields"></div><div class="modal-actions ohs-actions"><button type="button" class="secondary" id="ohsPrevious">Geri</button><span></span><button type="button" class="secondary" id="saveOhsDraft">Taslak kaydet</button><button type="button" class="primary" id="ohsNext">İleri</button></div></form></dialog>
   <dialog id="exitDialog"><form><div class="modal-head"><div><p class="kicker">SİSTEMDEN ÇIKIŞ</p><h2>Verileri kaydetmek ister misiniz?</h2></div><button type="button" class="icon" id="cancelExitIcon">×</button></div><p class="exit-question">Kaydet ve çık seçeneği ana veri dosyasını günceller. Tarihli kopyalar yalnızca “Yedek al” düğmesiyle oluşturulur.</p><div class="modal-actions exit-actions"><button type="button" class="secondary" id="cancelExit">Vazgeç</button><button type="button" class="secondary danger-action" id="exitWithoutSave">Kaydetmeden çık</button><button type="button" class="primary" id="saveAndExit">Kaydet ve çık</button></div></form></dialog>
   <div id="toast" role="status"></div>
   <script src="config.js?v=20260720-6"></script>
   <script src="preflight.js?v=20260722-cloud-1"></script>
   <script src="backend.js?v=20260722-cloud-2"></script>
-  <script src="cloud-bootstrap.js?v=20260723-cloud-1"></script>
+  <script src="cloud-bootstrap.js?v=20260723-cloud-2"></script>
 </body>
 </html>
