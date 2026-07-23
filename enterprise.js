@@ -87,12 +87,11 @@
     ['consulted', 'C — Görüşü alınanlar', 'userMultiOptional', 'full'], ['informed', 'I — Bilgilendirilenler', 'userMultiOptional', 'full'],
     ['status', 'Durum', 'status', ''], ['priority', 'Öncelik', 'priority', ''],
     ['start', 'Planlanan başlangıç', 'date', ''], ['end', 'Planlanan bitiş', 'date', ''],
-    ['durationDays', 'Planlanan süre (gün)', 'numberOptional', ''],
     ['actualStart', 'Gerçekleşen başlangıç', 'dateOptional', ''], ['actualEnd', 'Gerçekleşen bitiş', 'dateOptional', ''],
     ['predecessorId', 'Önceki göreve bağlılık', 'taskPredecessor', 'full'],
     ['completion', 'Tamamlanma yüzdesi', 'percentage', ''], ['milestone', 'Kilometre taşı', 'yesNo', ''], ['milestoneName', 'Kilometre taşı türü', 'milestoneType', 'full'],
     ['resourceGroup', 'Kaynak / Kapasite grubu', 'resourceGroup', ''], ['effortHours', 'Planlanan efor (saat)', 'number', ''],
-    ['description', 'Açıklama', 'textarea', 'full'], ['delayReason', 'Gecikme nedeni', 'textareaOptional', 'full'],
+    ['description', 'Açıklama', 'textareaOptional', 'full'], ['delayReason', 'Gecikme nedeni', 'textareaOptional', 'full'],
     ['taskFiles', 'Görev belgeleri', 'taskFiles', 'full']
   ];
   fields.cost = [
@@ -193,6 +192,75 @@
     if (type === 'qualityStatus') return selectOptions(id, ['Planlandı', 'Uygun', 'Şartlı Kabul', 'Uygunsuz', 'Kapandı']);
     if (type === 'satisfaction') return `<select name="${id}"><option value="1">1 — Çok düşük</option><option value="2">2 — Düşük</option><option value="3">3 — Orta</option><option value="4">4 — İyi</option><option value="5">5 — Çok iyi</option></select>`;
     return baseInput(id, type);
+  };
+
+  window.setupSmartTaskForm = function (item = {}, context = {}) {
+    const form = $('#formFields');
+    if (!form) return;
+    const field = name => form.querySelector(`[name="${name}"]`)?.closest('label,.form-field');
+    const status = form.querySelector('[name="status"]');
+    const milestone = form.querySelector('[name="milestone"]');
+    const start = form.querySelector('[name="start"]');
+    const end = form.querySelector('[name="end"]');
+    const projectField = field('projectId');
+    const actualStartField = field('actualStart');
+    const actualEndField = field('actualEnd');
+    const completionField = field('completion');
+    const milestoneNameField = field('milestoneName');
+    const delayReasonField = field('delayReason');
+    const taskFilesField = field('taskFiles');
+
+    if (context.lockProject && projectField) projectField.hidden = true;
+
+    const durationHint = document.createElement('span');
+    durationHint.className = 'field-hint task-duration-hint';
+    end?.closest('label')?.append(durationHint);
+    const syncDuration = () => {
+      const duration = daysBetween(start?.value, end?.value);
+      durationHint.textContent = duration ? `Planlanan süre otomatik: ${duration} gün` : 'Süre başlangıç ve bitişten otomatik hesaplanır.';
+    };
+    start?.addEventListener('change', syncDuration);
+    end?.addEventListener('change', syncDuration);
+
+    const progressSection = document.createElement('section');
+    progressSection.className = 'task-progress-fields full';
+    progressSection.innerHTML = '<div class="task-form-section-head"><strong>Gerçekleşen / ilerleme</strong><small>Görev başladığında görünür.</small></div><div class="task-section-grid"></div>';
+    const progressGrid = progressSection.querySelector('.task-section-grid');
+    [actualStartField, actualEndField, completionField].forEach(node => node && progressGrid.append(node));
+
+    const extraDetails = document.createElement('details');
+    extraDetails.className = 'task-extra-fields full';
+    extraDetails.innerHTML = '<summary>RACI ve ek ayrıntılar <small>İsteğe bağlı</small></summary><div class="task-section-grid"></div>';
+    const extraGrid = extraDetails.querySelector('.task-section-grid');
+    ['consulted', 'informed', 'predecessorId', 'milestone', 'milestoneName', 'description', 'delayReason'].forEach(name => {
+      const node = field(name);
+      if (node) extraGrid.append(node);
+    });
+    form.insertBefore(progressSection, taskFilesField || null);
+    form.insertBefore(extraDetails, taskFilesField || null);
+
+    const hasExtraData = Boolean(
+      (item.consulted || []).length || (item.informed || []).length || item.predecessorId ||
+      item.milestone === 'true' || item.milestoneName || item.description || item.delayReason
+    );
+    extraDetails.open = hasExtraData;
+
+    const syncConditionalFields = () => {
+      const currentStatus = status?.value || 'todo';
+      const hasProgress = currentStatus !== 'todo' || item.actualStart || item.actualEnd;
+      progressSection.hidden = !hasProgress;
+      if (actualStartField) actualStartField.hidden = currentStatus === 'todo' && !item.actualStart;
+      if (actualEndField) actualEndField.hidden = currentStatus !== 'done' && !item.actualEnd;
+      if (completionField) completionField.hidden = currentStatus === 'todo';
+      if (milestoneNameField) milestoneNameField.hidden = milestone?.value !== 'true';
+      const late = end?.value && end.value < todayIso() && currentStatus !== 'done';
+      if (delayReasonField) delayReasonField.hidden = !late && !item.delayReason;
+    };
+    status?.addEventListener('change', syncConditionalFields);
+    milestone?.addEventListener('change', syncConditionalFields);
+    end?.addEventListener('change', syncConditionalFields);
+    syncDuration();
+    syncConditionalFields();
   };
 
   const panelToolbar = (title, description, type, buttonText) => `<div class="file-toolbar"><div><h3>${title}</h3><p>${description}</p></div>${type ? `<button class="primary permission-create" data-enterprise-add="${type}">+ ${buttonText}</button>` : ''}</div>`;
