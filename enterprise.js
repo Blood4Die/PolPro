@@ -252,11 +252,9 @@
     form.insertBefore(progressSection, taskFilesField || null);
     form.insertBefore(extraDetails, taskFilesField || null);
 
-    const hasExtraData = Boolean(
-      (item.consulted || []).length || (item.informed || []).length || item.predecessorId ||
-      item.milestone === 'true' || item.milestoneName || item.description || item.delayReason
-    );
-    extraDetails.open = hasExtraData;
+    // Düzenlemede mevcut RACI verileri olsa bile uzun isteğe bağlı alanları
+    // kullanıcının talebi olmadan açıp formu gereksiz uzatma.
+    extraDetails.open = false;
 
     const syncConditionalFields = () => {
       const currentStatus = status?.value || 'todo';
