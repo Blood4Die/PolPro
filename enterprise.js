@@ -209,6 +209,10 @@
     const actualStartField = field('actualStart');
     const actualEndField = field('actualEnd');
     const completionField = field('completion');
+    const actualStart = form.querySelector('[name="actualStart"]');
+    const actualEnd = form.querySelector('[name="actualEnd"]');
+    const completion = form.querySelector('[name="completion"]');
+    const effortHours = form.querySelector('[name="effortHours"]');
     const milestoneNameField = field('milestoneName');
     const delayReasonField = field('delayReason');
     const taskFilesField = field('taskFiles');
@@ -221,13 +225,19 @@
     const syncDuration = () => {
       const duration = daysBetween(start?.value, end?.value);
       durationHint.textContent = duration ? `Planlanan süre otomatik: ${duration} gün` : 'Süre başlangıç ve bitişten otomatik hesaplanır.';
+      if (effortHours) effortHours.value = duration ? String(duration * 8) : '0';
     };
+    if (effortHours) {
+      effortHours.readOnly = true;
+      effortHours.title = 'Planlanan süre × günlük 8 saat';
+      effortHours.closest('label')?.insertAdjacentHTML('beforeend', '<span class="field-hint">Planlanan gün × 8 saat olarak otomatik hesaplanır.</span>');
+    }
     start?.addEventListener('change', syncDuration);
     end?.addEventListener('change', syncDuration);
 
     const progressSection = document.createElement('section');
     progressSection.className = 'task-progress-fields full';
-    progressSection.innerHTML = '<div class="task-form-section-head"><strong>Gerçekleşen / ilerleme</strong><small>Görev başladığında görünür.</small></div><div class="task-section-grid"></div>';
+    progressSection.innerHTML = '<div class="task-form-section-head"><strong>Gerçekleşen / ilerleme</strong><small>Gerçekleşen tarihleri gerektiğinde girin.</small></div><div class="task-section-grid"></div>';
     const progressGrid = progressSection.querySelector('.task-section-grid');
     [actualStartField, actualEndField, completionField].forEach(node => node && progressGrid.append(node));
 
@@ -250,11 +260,13 @@
 
     const syncConditionalFields = () => {
       const currentStatus = status?.value || 'todo';
-      const hasProgress = currentStatus !== 'todo' || item.actualStart || item.actualEnd;
-      progressSection.hidden = !hasProgress;
-      if (actualStartField) actualStartField.hidden = currentStatus === 'todo' && !item.actualStart;
-      if (actualEndField) actualEndField.hidden = currentStatus !== 'done' && !item.actualEnd;
+      progressSection.hidden = false;
+      if (actualStartField) actualStartField.hidden = false;
+      if (actualEndField) actualEndField.hidden = false;
       if (completionField) completionField.hidden = currentStatus === 'todo';
+      if ((currentStatus === 'doing' || currentStatus === 'done') && actualStart && !actualStart.value) actualStart.value = todayIso();
+      if (currentStatus === 'done' && actualEnd && !actualEnd.value) actualEnd.value = todayIso();
+      if (currentStatus === 'done' && completion) completion.value = '100';
       if (milestoneNameField) milestoneNameField.hidden = milestone?.value !== 'true';
       const late = end?.value && end.value < todayIso() && currentStatus !== 'done';
       if (delayReasonField) delayReasonField.hidden = !late && !item.delayReason;
@@ -304,8 +316,8 @@
     const tasks = data.tasks.filter(task => task.projectId === p.id).sort((a, b) => a.start.localeCompare(b.start));
     const root = $('#detailTasks');
     root.innerHTML = `${panelToolbar('İş kırılım yapısı ve RACI', 'Ana iş paketleri, sorumluluklar, bağımlılıklar ve planlanan/gerçekleşen süreler.', 'task', 'Görev ekle')}<article class="panel table-panel"><div class="table-wrap"><table class="enterprise-table"><thead><tr><th>İş paketi / Görev</th><th>RACI</th><th>Planlanan</th><th>Gerçekleşen</th><th>Bağlı görev</th><th>İlerleme</th><th>Durum</th><th></th></tr></thead><tbody>${tasks.map(task => {
-      const planned = +task.durationDays || daysBetween(task.start, task.end), actual = daysBetween(task.actualStart, task.actualEnd), late = isLate(task.end, task.status === 'done');
-      return `<tr class="${late ? 'row-late' : ''}"><td><span class="work-package">${esc(task.workPackage)}</span><strong>${task.milestone === 'true' ? '◆ ' : ''}${esc(task.title)}</strong>${task.milestoneName ? `<small>Kilometre taşı: ${esc(task.milestoneName)}</small>` : ''}${task.description ? `<small>${esc(task.description)}</small>` : ''}${late && task.delayReason ? `<em>Gecikme: ${esc(task.delayReason)}</em>` : ''}</td><td><small><b>R</b> ${esc(taskAssigneeLabel(task))}</small><small><b>A</b> ${esc(task.accountable || taskAssigneeLabel(task))}</small><small><b>C</b> ${esc((task.consulted || []).join(', ') || '—')}</small><small><b>I</b> ${esc((task.informed || []).join(', ') || '—')}</small></td><td>${date(task.start)}<br>${date(task.end)}<small>${planned} gün · ${+task.effortHours || 0} saat</small></td><td>${task.actualStart ? date(task.actualStart) : '—'}<br>${task.actualEnd ? date(task.actualEnd) : '—'}<small>${actual ? `${actual} gün` : 'Devam ediyor / başlamadı'}</small></td><td>${esc(taskName(task.predecessorId))}</td><td>${completionBar(task.completion)}</td><td><span class="status-pill ${statusClass(task.status)}">${task.status === 'todo' ? 'Yapılacak' : task.status === 'doing' ? 'Devam ediyor' : 'Tamamlandı'}</span></td><td>${recordButtons('task', task.id)}</td></tr>`;
+      const planned = +task.durationDays || daysBetween(task.start, task.end), actual = task.actualStart ? daysBetween(task.actualStart, task.actualEnd || todayIso()) : 0, actualText = !task.actualStart ? 'Başlamadı' : task.actualEnd ? `${actual} gün` : `${actual} gün · devam ediyor`, late = isLate(task.end, task.status === 'done');
+      return `<tr class="${late ? 'row-late' : ''}"><td><span class="work-package">${esc(task.workPackage)}</span><strong>${task.milestone === 'true' ? '◆ ' : ''}${esc(task.title)}</strong>${task.milestoneName ? `<small>Kilometre taşı: ${esc(task.milestoneName)}</small>` : ''}${task.description ? `<small>${esc(task.description)}</small>` : ''}${late && task.delayReason ? `<em>Gecikme: ${esc(task.delayReason)}</em>` : ''}</td><td><small><b>R</b> ${esc(taskAssigneeLabel(task))}</small><small><b>A</b> ${esc(task.accountable || taskAssigneeLabel(task))}</small><small><b>C</b> ${esc((task.consulted || []).join(', ') || '—')}</small><small><b>I</b> ${esc((task.informed || []).join(', ') || '—')}</small></td><td>${date(task.start)}<br>${date(task.end)}<small>${planned} gün · ${planned * 8} saat</small></td><td>${task.actualStart ? date(task.actualStart) : '—'}<br>${task.actualEnd ? date(task.actualEnd) : '—'}<small>${actualText}</small></td><td>${esc(taskName(task.predecessorId))}</td><td>${completionBar(task.completion)}</td><td><span class="status-pill ${statusClass(task.status)}">${task.status === 'todo' ? 'Yapılacak' : task.status === 'doing' ? 'Devam ediyor' : 'Tamamlandı'}</span></td><td>${recordButtons('task', task.id)}</td></tr>`;
     }).join('') || `<tr><td colspan="8">${empty('Bu projeye görev eklenmemiş.')}</td></tr>`}</tbody></table></div></article>`;
     bindEnterpriseActions(root, p.id);
   }
