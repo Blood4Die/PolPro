@@ -197,7 +197,10 @@
   window.setupSmartTaskForm = function (item = {}, context = {}) {
     const form = $('#formFields');
     if (!form) return;
-    const field = name => form.querySelector(`[name="${name}"]`)?.closest('label,.form-field');
+    const field = name => {
+      const control = form.querySelector(`[name="${name}"]`);
+      return control?.closest('.form-field') || control?.closest('label');
+    };
     const status = form.querySelector('[name="status"]');
     const milestone = form.querySelector('[name="milestone"]');
     const start = form.querySelector('[name="start"]');
