@@ -103,7 +103,7 @@
   fields.procurement = [
     ['projectId', 'Proje', 'project', ''], ['materialCode', 'Malzeme kodu', 'text', ''], ['materialDescription', 'Malzeme tanımı', 'text', 'full'],
     ['technicalSpec', 'Teknik özellik', 'textarea', 'full'], ['quantity', 'Miktar', 'number', ''], ['requestDate', 'Talep tarihi', 'date', ''],
-    ['quoteStatus', 'Teklif durumu', 'quoteStatus', ''], ['vendor', 'Kayıtlı tedarikçi', 'supplierSelect', ''], ['orderDate', 'Sipariş tarihi', 'dateOptional', ''],
+    ['quoteStatus', 'Teklif durumu', 'quoteStatus', ''], ['vendor', 'Kayıtlı tedarikçi', 'supplierSelect', 'full'], ['orderDate', 'Sipariş tarihi', 'dateOptional', ''],
     ['dueDate', 'Termin tarihi', 'date', ''], ['actualDeliveryDate', 'Gerçek teslim tarihi', 'dateOptional', ''],
     ['receivedQuantity', 'Gelen miktar', 'numberOptional', ''], ['qualityResult', 'Kalite kontrol sonucu', 'qualityResult', ''],
     ['owner', 'Satın alma sorumlusu', 'userSelect', ''], ['longLead', 'Uzun terminli ürün', 'yesNo', '']
