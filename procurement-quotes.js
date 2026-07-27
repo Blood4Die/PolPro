@@ -38,6 +38,7 @@
     quote.vatRate = Math.max(0, +quote.vatRate || 0);
     quote.deliveryDays = Math.max(0, +quote.deliveryDays || 0);
     quote.warrantyMonths = Math.max(0, +quote.warrantyMonths || 0);
+    quote.documentFileIds = Array.isArray(quote.documentFileIds) ? quote.documentFileIds : [];
     quote.status ||= 'Taslak';
     quote.lines.forEach(line => {
       line.id ||= makeId();
@@ -52,6 +53,11 @@
   let activePurchaseView = 'quotes';
   let editingQuoteId = null;
   let draftLines = [];
+  let draftDocumentFileIds = [];
+  let pendingDocumentFiles = [];
+  const quoteDocuments = quote => (quote.documentFileIds || [])
+    .map(id => data.files.find(file => String(file.id) === String(id)))
+    .filter(Boolean);
 
   function ensureQuoteDialog() {
     if ($('#purchaseQuoteDialog')) return;
@@ -63,25 +69,22 @@
             <button type="button" class="dialog-close" id="closePurchaseQuote" aria-label="Teklif formunu kapat">×</button>
           </header>
           <input type="hidden" name="projectId">
-          <div class="quote-form-grid">
-            <label class="full">Kayıtlı tedarikçi
+          <section class="quote-form-section">
+            <div class="quote-form-grid quote-supplier-grid">
+              <label class="full">Kayıtlı tedarikçi
               <span class="quote-supplier-field">
                 <select name="supplier" required></select>
                 <button type="button" class="secondary" id="addSupplierFromQuote">+ Yeni tedarikçi ekle</button>
               </span>
-            </label>
-            <label>Teklif no<input name="quoteNo" maxlength="80" required></label>
-            <label>Teklif tarihi<input name="quoteDate" type="date" required></label>
-            <label>Geçerlilik tarihi<input name="validUntil" type="date"></label>
-            <label>Durum<select name="status"><option>Taslak</option><option>Gönderildi</option><option>Değerlendiriliyor</option><option>Revizyon İstendi</option><option>Onaylandı</option><option>Reddedildi</option></select></label>
-            <label>Para birimi<select name="currency"><option value="TRY">₺ TL</option><option value="EUR">€ EUR</option><option value="USD">$ USD</option></select></label>
-            <label>KDV (%)<input name="vatRate" type="number" min="0" max="100" step="0.01" value="20"></label>
-            <label>Genel termin (gün)<input name="deliveryDays" type="number" min="0" step="1" value="0"></label>
-            <label>Garanti (ay)<input name="warrantyMonths" type="number" min="0" step="1" value="0"></label>
-            <label class="full">Ödeme koşulu<input name="paymentTerms" maxlength="180" placeholder="%30 sipariş / %70 teslim"></label>
-            <label class="full">Teklif belgesi bağlantısı<input name="documentUrl" type="url" placeholder="https://..."></label>
-            <label class="full">Notlar<textarea name="notes" rows="2"></textarea></label>
-          </div>
+              </label>
+            </div>
+            <div class="quote-form-grid quote-primary-meta">
+              <label>Teklif no<input name="quoteNo" maxlength="80" required></label>
+              <label>Teklif tarihi<input name="quoteDate" type="date" required></label>
+              <label>Para birimi<select name="currency"><option value="TRY">₺ TL</option><option value="EUR">€ EUR</option><option value="USD">$ USD</option></select></label>
+              <label>KDV (%)<input name="vatRate" type="number" min="0" max="100" step="0.01" value="20"></label>
+            </div>
+          </section>
           <div class="quote-lines-head">
             <div><h3>Malzeme kalemleri</h3><p id="quoteLineCount">0 kalem</p></div>
             <button type="button" class="secondary" id="addQuoteLine">+ Malzeme satırı ekle</button>
@@ -98,7 +101,30 @@
             <span>KDV</span><strong id="quoteTax">₺0,00</strong>
             <span>Genel toplam</span><strong id="quoteGrandTotal">₺0,00</strong>
           </div>
+          <section class="quote-form-section quote-commercial-section">
+            <div class="quote-form-grid quote-commercial-grid">
+              <label>Genel termin (gün)<input name="deliveryDays" type="number" min="0" step="1" value="0"></label>
+              <label>Ödeme koşulu<input name="paymentTerms" maxlength="180" placeholder="%30 sipariş / %70 teslim"></label>
+              <label>Garanti (ay)<input name="warrantyMonths" type="number" min="0" step="1" value="0"></label>
+              <div class="quote-document-field">
+                <span class="quote-field-label">Teklif belgesi</span>
+                <label class="quote-file-picker">+ Belge seç<input id="quoteDocumentInput" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"></label>
+                <small>Birden fazla belge seçilebilir · Her belge en fazla 15 MB</small>
+              </div>
+            </div>
+            <div id="quoteDocumentList" class="quote-document-list"></div>
+          </section>
+          <details class="quote-extra-details">
+            <summary>Ek teklif bilgileri</summary>
+            <div class="quote-form-grid">
+              <label>Geçerlilik tarihi<input name="validUntil" type="date"></label>
+              <label>Durum<select name="status"><option>Taslak</option><option>Gönderildi</option><option>Değerlendiriliyor</option><option>Revizyon İstendi</option><option>Onaylandı</option><option>Reddedildi</option></select></label>
+              <label class="full">Harici belge bağlantısı<input name="documentUrl" type="url" placeholder="https://..."></label>
+              <label class="full">Notlar<textarea name="notes" rows="2"></textarea></label>
+            </div>
+          </details>
           <footer class="quote-dialog-actions">
+            <p>Kalem tutarları miktar, fiyat ve iskonto değiştikçe otomatik hesaplanır.</p>
             <button type="button" class="secondary" id="cancelPurchaseQuote">Vazgeç</button>
             <button type="submit" class="primary">Teklifi kaydet</button>
           </footer>
@@ -125,6 +151,15 @@
       $('[data-detail-tab="suppliers"]')?.click();
       setTimeout(() => openDialog('supplier', null, { projectId, rating: 0, status: 'Aday' }), 0);
     };
+    $('#quoteDocumentInput').onchange = event => {
+      const selected = [...event.currentTarget.files];
+      selected.forEach(file => {
+        if (file.size > 15 * 1024 * 1024) toast(`${file.name}: belge sınırı 15 MB.`);
+        else pendingDocumentFiles.push(file);
+      });
+      event.currentTarget.value = '';
+      renderQuoteDocuments();
+    };
     $('#purchaseQuoteForm').onsubmit = saveQuoteForm;
   }
 
@@ -147,6 +182,8 @@
     const quote = quoteId ? data.purchaseQuotes.find(item => String(item.id) === String(quoteId)) : null;
     if (quote?.convertedAt) return toast('Satın almaya aktarılmış teklif değiştirilemez.');
     editingQuoteId = quote?.id || null;
+    draftDocumentFileIds = Array.isArray(quote?.documentFileIds) ? [...quote.documentFileIds] : [];
+    pendingDocumentFiles = [];
     draftLines = (quote?.lines?.length ? quote.lines : [{
       id: makeId(), materialCode: '', description: '', technicalSpec: '',
       quantity: 1, unit: 'Adet', unitPrice: 0, discountRate: 0
@@ -168,7 +205,39 @@
     form.elements.documentUrl.value = quote?.documentUrl || '';
     form.elements.notes.value = quote?.notes || '';
     renderQuoteLines();
+    renderQuoteDocuments();
     $('#purchaseQuoteDialog').showModal();
+  }
+
+  function renderQuoteDocuments() {
+    const list = $('#quoteDocumentList');
+    if (!list) return;
+    const existing = draftDocumentFileIds
+      .map(id => data.files.find(file => String(file.id) === String(id)))
+      .filter(Boolean);
+    list.innerHTML = [
+      ...existing.map(file => `<div class="quote-document-item">
+        <span>▤</span><div><strong>${escapeHtml(file.name)}</strong><small>${formatSize(file.size)} · Yüklendi</small></div>
+        ${file.content ? `<a href="${escapeHtml(file.content)}" download="${escapeHtml(file.name)}" title="İndir">↓</a>` : ''}
+        <button type="button" class="delete" data-remove-quote-document="${file.id}" title="Tekliften kaldır">×</button>
+      </div>`),
+      ...pendingDocumentFiles.map((file, index) => `<div class="quote-document-item pending">
+        <span>+</span><div><strong>${escapeHtml(file.name)}</strong><small>${formatSize(file.size)} · Kaydedilmeyi bekliyor</small></div>
+        <button type="button" class="delete" data-remove-pending-quote-document="${index}" title="Seçimi kaldır">×</button>
+      </div>`)
+    ].join('') || '<div class="quote-document-empty">Bu teklife henüz belge eklenmemiş.</div>';
+    list.querySelectorAll('[data-remove-quote-document]').forEach(button => {
+      button.onclick = () => {
+        draftDocumentFileIds = draftDocumentFileIds.filter(id => String(id) !== button.dataset.removeQuoteDocument);
+        renderQuoteDocuments();
+      };
+    });
+    list.querySelectorAll('[data-remove-pending-quote-document]').forEach(button => {
+      button.onclick = () => {
+        pendingDocumentFiles.splice(+button.dataset.removePendingQuoteDocument, 1);
+        renderQuoteDocuments();
+      };
+    });
   }
 
   function renderQuoteLines() {
@@ -228,7 +297,7 @@
     });
   }
 
-  function saveQuoteForm(event) {
+  async function saveQuoteForm(event) {
     event.preventDefault();
     const form = event.currentTarget;
     if (!draftLines.length) return toast('En az bir malzeme kalemi eklenmelidir.');
@@ -238,6 +307,22 @@
     const values = Object.fromEntries(new FormData(form));
     const existing = editingQuoteId ? data.purchaseQuotes.find(item => String(item.id) === String(editingQuoteId)) : null;
     const totals = calculateQuote(draftLines, values.vatRate);
+    const submitButton = form.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Kaydediliyor...';
+    for (const file of pendingDocumentFiles) {
+      try {
+        toast(`${file.name} yükleniyor...`);
+        const fileRecord = await createFileRecord(+values.projectId, file);
+        data.files.push(fileRecord);
+        draftDocumentFileIds.push(fileRecord.id);
+        addActivity(+values.projectId, 'Teklif belgesi yüklendi', file.name, 'file');
+      } catch (error) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Teklifi kaydet';
+        return toast(`Belge yüklenemedi: ${error.message}`);
+      }
+    }
     const quote = {
       id: existing?.id || makeId(),
       projectId: +values.projectId,
@@ -252,6 +337,7 @@
       warrantyMonths: Math.max(0, +values.warrantyMonths || 0),
       paymentTerms: values.paymentTerms.trim(),
       documentUrl: values.documentUrl.trim(),
+      documentFileIds: [...draftDocumentFileIds],
       notes: values.notes.trim(),
       lines: draftLines.map(line => ({ ...line })),
       ...totals,
@@ -265,7 +351,10 @@
     else data.purchaseQuotes.push(quote);
     addActivity(quote.projectId, `Teklif ${existing ? 'güncellendi' : 'eklendi'}`, `${quote.quoteNo} · ${quote.supplier} · ${quote.lines.length} kalem`, 'update');
     $('#purchaseQuoteDialog').close();
+    submitButton.disabled = false;
+    submitButton.textContent = 'Teklifi kaydet';
     editingQuoteId = null;
+    pendingDocumentFiles = [];
     save();
     renderProjectDetail();
     toast('Teklif başarıyla kaydedildi.');
@@ -329,7 +418,8 @@
         <td class="right"><strong>${quoteMoney(quote.total, quote.currency)}</strong></td>
         <td>${quote.deliveryDays || 0} gün<small>${escapeHtml(quote.paymentTerms || 'Ödeme koşulu yok')} · ${quote.warrantyMonths || 0} ay garanti</small></td>
         <td><span class="status-pill ${normalizeStatus(quote.status)}">${escapeHtml(quote.status)}</span>${quote.convertedAt ? '<small>Satın almaya aktarıldı</small>' : ''}</td>
-        <td>${quote.documentUrl ? `<a href="${escapeHtml(quote.documentUrl)}" target="_blank" rel="noopener">Belgeyi aç ↗</a>` : '—'}</td>
+        <td>${quoteDocuments(quote).map(file => `<a href="${escapeHtml(file.content || '#')}" ${file.content ? `download="${escapeHtml(file.name)}"` : ''}>${escapeHtml(file.name)}${file.content ? ' ↓' : ''}</a>`).join('') ||
+          (quote.documentUrl ? `<a href="${escapeHtml(quote.documentUrl)}" target="_blank" rel="noopener">Belgeyi aç ↗</a>` : '—')}</td>
         <td class="quote-row-actions">${quote.convertedAt ? `<button class="secondary" type="button" data-view-purchase-records>Aktarıldı</button>` :
           `<button class="edit" type="button" data-edit-quote="${quote.id}" title="Teklifi düzenle">✎</button>
            <button class="secondary permission-create" type="button" data-convert-quote="${quote.id}">Satın almaya aktar</button>
