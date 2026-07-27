@@ -1,8 +1,9 @@
 (function () {
   const backend = window.PolatProBackend;
   const appScripts = [
-    'app.js?v=20260723-cloud-8',
-    'enterprise.js?v=20260723-cloud-6',
+    'app.js?v=20260727-cloud-9',
+    'enterprise.js?v=20260727-cloud-7',
+    'procurement-quotes.js?v=20260727-1',
     'isg-risk.js?v=20260723-2',
     'kedi-kumu-plan.js?v=20260722-cloud-1',
     'account-admin.js?v=20260722-cloud-1'
