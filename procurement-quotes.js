@@ -96,10 +96,10 @@
             </table>
           </div>
           <div class="quote-totals" aria-live="polite">
-            <span>Ara toplam</span><strong id="quoteSubtotal">₺0,00</strong>
-            <span>Satır iskontoları</span><strong id="quoteDiscount">₺0,00</strong>
-            <span>KDV</span><strong id="quoteTax">₺0,00</strong>
-            <span>Genel toplam</span><strong id="quoteGrandTotal">₺0,00</strong>
+            <div><span>Ara toplam</span><strong id="quoteSubtotal">₺0,00</strong></div>
+            <div><span>Satır iskontoları</span><strong id="quoteDiscount">₺0,00</strong></div>
+            <div><span>KDV</span><strong id="quoteTax">₺0,00</strong></div>
+            <div class="grand-total"><span>Genel toplam</span><strong id="quoteGrandTotal">₺0,00</strong></div>
           </div>
           <section class="quote-form-section quote-commercial-section">
             <div class="quote-form-grid quote-commercial-grid">
