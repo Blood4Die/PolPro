@@ -101,11 +101,16 @@
 .supplier-select-with-add {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
   margin-top: 6px;
 }
 
 .supplier-select-with-add select {
+  width: 100%;
+  min-width: 0;
   margin-top: 0 !important;
 }
 
