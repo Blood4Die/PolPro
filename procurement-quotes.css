@@ -38,3 +38,27 @@
 .quote-dialog-actions p{flex:1;margin:0;color:var(--muted);font-size:9px}
 @media(max-width:900px){.quote-primary-meta,.quote-commercial-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.quote-primary-meta,.quote-commercial-grid{grid-template-columns:1fr}.quote-dialog-actions{flex-wrap:wrap}.quote-dialog-actions p{flex-basis:100%}}
+
+/* Masaüstü oran ve hizalama düzeltmeleri */
+.quote-lines-table{min-width:980px}
+.quote-lines-table th:nth-child(1){width:12%}
+.quote-lines-table th:nth-child(2){width:32%}
+.quote-lines-table th:nth-child(3){width:9%}
+.quote-lines-table th:nth-child(4){width:9%}
+.quote-lines-table th:nth-child(5){width:12%}
+.quote-lines-table th:nth-child(6){width:10%}
+.quote-lines-table th:nth-child(7){width:12%}
+.quote-lines-table th:nth-child(8){width:4%}
+.quote-lines-table input,.quote-lines-table select{height:34px}
+.quote-lines-table textarea{min-height:34px;height:34px}
+.quote-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;width:100%;margin:14px 0;padding:0;border:0}
+.quote-totals>div{display:flex;flex-direction:column;gap:5px;min-width:0;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:#fafbfa}
+.quote-totals>div span{font-size:8px}
+.quote-totals>div strong{font-size:12px;text-align:left;white-space:nowrap}
+.quote-totals>div.grand-total{border-color:#cbd6cf;background:#f3f8f5}
+.quote-totals>div.grand-total span,.quote-totals>div.grand-total strong{color:var(--primary)}
+.quote-commercial-grid>label,.quote-document-field{display:flex;flex-direction:column}
+.quote-commercial-grid>label input{height:38px}
+.quote-file-picker{width:100%;height:38px;box-sizing:border-box}
+@media(max-width:900px){.quote-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.quote-lines-table{min-width:980px}}
+@media(max-width:560px){.quote-totals{grid-template-columns:1fr}}
