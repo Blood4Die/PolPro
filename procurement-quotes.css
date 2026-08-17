@@ -64,3 +64,6 @@
 .quote-supplier-grid{padding-bottom:2px}
 @media(max-width:900px){.quote-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.quote-lines-table{min-width:980px}}
 @media(max-width:560px){.quote-totals{grid-template-columns:1fr}}
+
+/* Teklif kalemlerinin kısmi satın alma aktarımı */
+.partially-converted-quote{background:#fffaf0}
