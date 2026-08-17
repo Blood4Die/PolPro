@@ -81,7 +81,20 @@
     }
     return transfer;
   };
-  data.purchaseQuotes.forEach(syncQuoteTransferMetadata);
+  const quoteProcurementChangeActivity = quote => (Array.isArray(data.activities) ? data.activities : [])
+    .find(activity =>
+      +activity.projectId === +quote.projectId &&
+      activity.action === 'Satın alma kaydı silindi' &&
+      String(activity.detail || '').split(' · ').includes(String(quote.quoteNo))
+    );
+  data.purchaseQuotes.forEach(quote => {
+    const transfer = syncQuoteTransferMetadata(quote);
+    if (transfer.state !== 'none' || quote.procurementChangedAt) return;
+    const changeActivity = quoteProcurementChangeActivity(quote);
+    if (!changeActivity) return;
+    quote.procurementChangedAt = changeActivity.at || new Date().toISOString();
+    quote.procurementChangedBy = changeActivity.actor || '';
+  });
 
   let activePurchaseView = 'quotes';
   let editingQuoteId = null;
@@ -438,6 +451,8 @@
     quote.status = 'Onaylandı';
     quote.convertedAt ||= new Date().toISOString();
     quote.convertedBy = currentUser?.name || 'Kullanıcı';
+    quote.procurementChangedAt = '';
+    quote.procurementChangedBy = '';
     activePurchaseView = 'records';
     addActivity(quote.projectId, transfer.state === 'partial' ? 'Eksik teklif kalemleri satın almaya aktarıldı' : 'Teklif satın almaya aktarıldı', `${quote.quoteNo} · ${quote.supplier} · ${transfer.missingLines.length} kalem`, 'update');
     save();
@@ -450,6 +465,11 @@
       <thead><tr><th>Teklif / Tedarikçi</th><th>Kalemler</th><th class="right">Ara toplam</th><th class="right">İskonto</th><th class="right">KDV</th><th class="right">Genel toplam</th><th>Termin / Ödeme</th><th>Durum</th><th>Belge</th><th></th></tr></thead>
       <tbody>${quotes.map(quote => {
         const transfer = quoteTransferState(quote);
+        const displayedStatus = transfer.state === 'none' && quote.procurementChangedAt
+          ? 'Satın alma kalem değişikliği yapıldı'
+          : transfer.state === 'none' && quote.status === 'Onaylandı'
+            ? 'Aktarıma hazır'
+            : quote.status;
         const transferText = transfer.state === 'full'
           ? `Tam aktarıldı · ${transfer.linkedCount}/${transfer.totalCount} kalem`
           : transfer.state === 'partial'
@@ -471,7 +491,7 @@
         <td class="right">${quoteMoney(quote.taxTotal, quote.currency)}</td>
         <td class="right"><strong>${quoteMoney(quote.total, quote.currency)}</strong></td>
         <td>${quote.deliveryDays || 0} gün<small>${escapeHtml(quote.paymentTerms || 'Ödeme koşulu yok')} · ${quote.warrantyMonths || 0} ay garanti</small></td>
-        <td><span class="status-pill ${normalizeStatus(quote.status)}">${escapeHtml(quote.status)}</span><small>${transferText}</small></td>
+        <td><span class="status-pill ${normalizeStatus(displayedStatus)}">${escapeHtml(displayedStatus)}</span><small>${transferText}</small></td>
         <td>${quoteDocuments(quote).map(file => `<a href="${escapeHtml(file.content || '#')}" ${file.content ? `download="${escapeHtml(file.name)}"` : ''}>${escapeHtml(file.name)}${file.content ? ' ↓' : ''}</a>`).join('') ||
           (quote.documentUrl ? `<a href="${escapeHtml(quote.documentUrl)}" target="_blank" rel="noopener">Belgeyi aç ↗</a>` : '—')}</td>
         <td class="quote-row-actions">${actions}</td>
@@ -574,6 +594,10 @@
           : '';
         if (!confirm(`${record.materialDescription} satın alma kaydı silinsin mi?${warning}`)) return;
         data.procurements = data.procurements.filter(item => String(item.id) !== button.dataset.deleteProcurement);
+        if (linkedQuote) {
+          linkedQuote.procurementChangedAt = new Date().toISOString();
+          linkedQuote.procurementChangedBy = currentUser?.name || 'Kullanıcı';
+        }
         const transfer = linkedQuote ? syncQuoteTransferMetadata(linkedQuote) : null;
         const detail = linkedQuote
           ? `${record.materialDescription} · ${linkedQuote.quoteNo} · ${transfer.linkedCount}/${transfer.totalCount} kalem aktarıldı`
