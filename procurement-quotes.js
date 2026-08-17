@@ -1,5 +1,6 @@
 (function () {
   data.purchaseQuotes = Array.isArray(data.purchaseQuotes) ? data.purchaseQuotes : [];
+  data.procurements = Array.isArray(data.procurements) ? data.procurements : [];
 
   const todayIso = () => new Date().toISOString().slice(0, 10);
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -49,6 +50,38 @@
     });
     Object.assign(quote, calculateQuote(quote.lines, quote.vatRate));
   });
+
+  const quoteProcurementRecords = quote => data.procurements.filter(record =>
+    String(record.quoteId || '') === String(quote.id)
+  );
+  const quoteTransferState = quote => {
+    const lineIds = new Set(quote.lines.map(line => String(line.id)));
+    const records = quoteProcurementRecords(quote);
+    const linkedLineIds = new Set(records
+      .map(record => String(record.quoteLineId || ''))
+      .filter(lineId => lineIds.has(lineId)));
+    const missingLines = quote.lines.filter(line => !linkedLineIds.has(String(line.id)));
+    const linkedCount = linkedLineIds.size;
+    const totalCount = quote.lines.length;
+    return {
+      records,
+      missingLines,
+      linkedCount,
+      totalCount,
+      state: linkedCount === 0 ? 'none' : linkedCount >= totalCount ? 'full' : 'partial'
+    };
+  };
+  const syncQuoteTransferMetadata = quote => {
+    const transfer = quoteTransferState(quote);
+    if (transfer.state === 'none') {
+      quote.convertedAt = '';
+      quote.convertedBy = '';
+    } else {
+      quote.convertedAt ||= new Date().toISOString();
+    }
+    return transfer;
+  };
+  data.purchaseQuotes.forEach(syncQuoteTransferMetadata);
 
   let activePurchaseView = 'quotes';
   let editingQuoteId = null;
@@ -180,7 +213,9 @@
   function openQuoteDialog(quoteId = null, projectId = currentDetailId) {
     ensureQuoteDialog();
     const quote = quoteId ? data.purchaseQuotes.find(item => String(item.id) === String(quoteId)) : null;
-    if (quote?.convertedAt) return toast('Satın almaya aktarılmış teklif değiştirilemez.');
+    if (quote && quoteTransferState(quote).linkedCount > 0) {
+      return toast('Satın alma kaydı bulunan teklif değiştirilemez. Önce bağlı satın alma kalemlerini kaldırın.');
+    }
     editingQuoteId = quote?.id || null;
     draftDocumentFileIds = Array.isArray(quote?.documentFileIds) ? [...quote.documentFileIds] : [];
     pendingDocumentFiles = [];
@@ -363,12 +398,16 @@
   function convertQuoteToProcurement(quoteId) {
     const quote = data.purchaseQuotes.find(item => String(item.id) === String(quoteId));
     if (!quote) return;
-    if (quote.convertedAt) return toast('Bu teklif daha önce satın alma kayıtlarına aktarıldı.');
     if (!quote.lines.length) return toast('Aktarılacak malzeme kalemi bulunamadı.');
-    if (!confirm(`${quote.quoteNo} numaralı teklifin ${quote.lines.length} kalemi satın alma kayıtlarına aktarılsın mı?`)) return;
+    const transfer = quoteTransferState(quote);
+    if (!transfer.missingLines.length) return toast('Bu teklifin tüm kalemleri satın alma kayıtlarında bulunuyor.');
+    const transferLabel = transfer.state === 'partial'
+      ? `${transfer.missingLines.length} eksik kalemi`
+      : `${transfer.missingLines.length} kalemi`;
+    if (!confirm(`${quote.quoteNo} numaralı teklifin ${transferLabel} satın alma kayıtlarına aktarılsın mı?`)) return;
     const orderDate = todayIso();
     const dueDate = addDays(orderDate, quote.deliveryDays);
-    quote.lines.forEach((line, index) => {
+    transfer.missingLines.forEach((line, index) => {
       const rowNet = (+line.quantity || 0) * (+line.unitPrice || 0) * (1 - (+line.discountRate || 0) / 100);
       data.procurements.push({
         id: Date.now() * 100 + index,
@@ -397,19 +436,34 @@
       });
     });
     quote.status = 'Onaylandı';
-    quote.convertedAt = new Date().toISOString();
+    quote.convertedAt ||= new Date().toISOString();
     quote.convertedBy = currentUser?.name || 'Kullanıcı';
     activePurchaseView = 'records';
-    addActivity(quote.projectId, 'Teklif satın almaya aktarıldı', `${quote.quoteNo} · ${quote.supplier} · ${quote.lines.length} kalem`, 'update');
+    addActivity(quote.projectId, transfer.state === 'partial' ? 'Eksik teklif kalemleri satın almaya aktarıldı' : 'Teklif satın almaya aktarıldı', `${quote.quoteNo} · ${quote.supplier} · ${transfer.missingLines.length} kalem`, 'update');
     save();
     renderProjectDetail();
-    toast(`${quote.lines.length} malzeme kalemi satın alma kayıtlarına aktarıldı.`);
+    toast(`${transfer.missingLines.length} malzeme kalemi satın alma kayıtlarına aktarıldı.`);
   }
 
   function quoteTable(quotes) {
     return `<article class="panel table-panel"><div class="table-wrap"><table class="enterprise-table purchase-quotes-table">
       <thead><tr><th>Teklif / Tedarikçi</th><th>Kalemler</th><th class="right">Ara toplam</th><th class="right">İskonto</th><th class="right">KDV</th><th class="right">Genel toplam</th><th>Termin / Ödeme</th><th>Durum</th><th>Belge</th><th></th></tr></thead>
-      <tbody>${quotes.map(quote => `<tr class="${quote.convertedAt ? 'converted-quote' : ''}">
+      <tbody>${quotes.map(quote => {
+        const transfer = quoteTransferState(quote);
+        const transferText = transfer.state === 'full'
+          ? `Tam aktarıldı · ${transfer.linkedCount}/${transfer.totalCount} kalem`
+          : transfer.state === 'partial'
+            ? `Kısmen aktarıldı · ${transfer.linkedCount}/${transfer.totalCount} kalem`
+            : 'Satın almaya aktarılmadı';
+        const actions = transfer.state === 'full'
+          ? `<button class="secondary" type="button" data-view-purchase-records>Satın almada görüntüle</button>`
+          : transfer.state === 'partial'
+            ? `<button class="secondary" type="button" data-view-purchase-records>Bağlı kalemleri gör</button>
+               <button class="secondary permission-create" type="button" data-convert-quote="${quote.id}">Eksik ${transfer.missingLines.length} kalemi aktar</button>`
+            : `<button class="edit" type="button" data-edit-quote="${quote.id}" title="Teklifi düzenle">✎</button>
+               <button class="secondary permission-create" type="button" data-convert-quote="${quote.id}">Satın almaya aktar</button>
+               <button class="delete" type="button" data-delete-quote="${quote.id}" title="Teklifi sil">×</button>`;
+        return `<tr class="${transfer.state === 'full' ? 'converted-quote' : transfer.state === 'partial' ? 'partially-converted-quote' : ''}">
         <td><strong>${escapeHtml(quote.quoteNo)}</strong><small>${escapeHtml(quote.supplier)} · ${date(quote.quoteDate)}</small></td>
         <td><strong>${quote.lines.length} kalem</strong><small>${quote.lines.slice(0, 2).map(line => escapeHtml(line.description)).join(' · ')}${quote.lines.length > 2 ? ' …' : ''}</small></td>
         <td class="right">${quoteMoney(quote.subtotal, quote.currency)}</td>
@@ -417,14 +471,12 @@
         <td class="right">${quoteMoney(quote.taxTotal, quote.currency)}</td>
         <td class="right"><strong>${quoteMoney(quote.total, quote.currency)}</strong></td>
         <td>${quote.deliveryDays || 0} gün<small>${escapeHtml(quote.paymentTerms || 'Ödeme koşulu yok')} · ${quote.warrantyMonths || 0} ay garanti</small></td>
-        <td><span class="status-pill ${normalizeStatus(quote.status)}">${escapeHtml(quote.status)}</span>${quote.convertedAt ? '<small>Satın almaya aktarıldı</small>' : ''}</td>
+        <td><span class="status-pill ${normalizeStatus(quote.status)}">${escapeHtml(quote.status)}</span><small>${transferText}</small></td>
         <td>${quoteDocuments(quote).map(file => `<a href="${escapeHtml(file.content || '#')}" ${file.content ? `download="${escapeHtml(file.name)}"` : ''}>${escapeHtml(file.name)}${file.content ? ' ↓' : ''}</a>`).join('') ||
           (quote.documentUrl ? `<a href="${escapeHtml(quote.documentUrl)}" target="_blank" rel="noopener">Belgeyi aç ↗</a>` : '—')}</td>
-        <td class="quote-row-actions">${quote.convertedAt ? `<button class="secondary" type="button" data-view-purchase-records>Aktarıldı</button>` :
-          `<button class="edit" type="button" data-edit-quote="${quote.id}" title="Teklifi düzenle">✎</button>
-           <button class="secondary permission-create" type="button" data-convert-quote="${quote.id}">Satın almaya aktar</button>
-           <button class="delete" type="button" data-delete-quote="${quote.id}" title="Teklifi sil">×</button>`}</td>
-      </tr>`).join('') || `<tr><td colspan="10">${empty('Bu proje için teklif kaydı bulunmuyor.')}</td></tr>`}</tbody>
+        <td class="quote-row-actions">${actions}</td>
+      </tr>`;
+      }).join('') || `<tr><td colspan="10">${empty('Bu proje için teklif kaydı bulunmuyor.')}</td></tr>`}</tbody>
     </table></div></article>`;
   }
 
@@ -496,7 +548,7 @@
     root.querySelectorAll('[data-delete-quote]').forEach(button => {
       button.onclick = () => {
         const quote = data.purchaseQuotes.find(item => String(item.id) === button.dataset.deleteQuote);
-        if (!quote || quote.convertedAt) return toast('Satın almaya aktarılmış teklif silinemez.');
+        if (!quote || quoteTransferState(quote).linkedCount > 0) return toast('Satın alma kaydı bulunan teklif silinemez.');
         if (!confirm(`${quote.quoteNo} numaralı teklif silinsin mi?`)) return;
         data.purchaseQuotes = data.purchaseQuotes.filter(item => String(item.id) !== button.dataset.deleteQuote);
         addActivity(p.id, 'Teklif silindi', `${quote.quoteNo} · ${quote.supplier}`, 'update');
@@ -513,11 +565,27 @@
     root.querySelectorAll('[data-delete-procurement]').forEach(button => {
       button.onclick = () => {
         const record = data.procurements.find(item => String(item.id) === button.dataset.deleteProcurement);
-        if (!record || !confirm(`${record.materialDescription} satın alma kaydı silinsin mi?`)) return;
+        if (!record) return;
+        const linkedQuote = record.quoteId
+          ? data.purchaseQuotes.find(item => String(item.id) === String(record.quoteId))
+          : null;
+        const warning = linkedQuote
+          ? ` Bu kayıt ${linkedQuote.quoteNo} numaralı tekliften oluşturuldu. Silindiğinde teklif kalemi yeniden aktarılabilir duruma dönecek.`
+          : '';
+        if (!confirm(`${record.materialDescription} satın alma kaydı silinsin mi?${warning}`)) return;
         data.procurements = data.procurements.filter(item => String(item.id) !== button.dataset.deleteProcurement);
-        addActivity(p.id, 'Satın alma kaydı silindi', record.materialDescription, 'update');
+        const transfer = linkedQuote ? syncQuoteTransferMetadata(linkedQuote) : null;
+        const detail = linkedQuote
+          ? `${record.materialDescription} · ${linkedQuote.quoteNo} · ${transfer.linkedCount}/${transfer.totalCount} kalem aktarıldı`
+          : record.materialDescription;
+        addActivity(p.id, 'Satın alma kaydı silindi', detail, 'update');
         save();
         renderProjectDetail();
+        if (linkedQuote) {
+          toast(transfer.state === 'none'
+            ? 'Satın alma kalemi silindi. Teklif yeniden düzenlenebilir ve aktarılabilir.'
+            : `Satın alma kalemi silindi. Teklif ${transfer.linkedCount}/${transfer.totalCount} kalemle kısmen aktarılmış durumda.`);
+        }
       };
     });
   }
