@@ -18,6 +18,32 @@
   grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
 }
 
+.procurement-commitment-summary {
+  border-left: 3px solid #d29a2d !important;
+}
+
+.available-budget-summary {
+  border-left: 3px solid #3f7f62 !important;
+}
+
+.detail-cost-summary article small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.cost-commitment-note {
+  margin: -6px 0 14px;
+  padding: 9px 11px;
+  border: 1px solid #eadfbf;
+  border-radius: 8px;
+  background: #fffaf0;
+  color: #705f32;
+  font-size: 9px;
+}
+
 .cost-type {
   display: inline-flex;
   align-items: center;
