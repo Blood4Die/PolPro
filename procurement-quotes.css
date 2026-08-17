@@ -67,3 +67,4 @@
 
 /* Teklif kalemlerinin kısmi satın alma aktarımı */
 .partially-converted-quote{background:#fffaf0}
+.status-pill.satin-alma-kalem-degisikligi-yapildi{max-width:150px;white-space:normal;line-height:1.25;text-align:center;background:#fff3cd;color:#805b00}
