@@ -68,3 +68,26 @@
 /* Teklif kalemlerinin kısmi satın alma aktarımı */
 .partially-converted-quote{background:#fffaf0}
 .status-pill.satin-alma-kalem-degisikligi-yapildi{max-width:150px;white-space:normal;line-height:1.25;text-align:center;background:#fff3cd;color:#805b00}
+
+/* Satın alma yaşam döngüsü */
+.purchase-subtabs{flex-wrap:wrap}
+.procurement-status-dialog{width:min(640px,94vw);max-height:92vh;padding:0;border:0;border-radius:14px;background:#fff;box-shadow:0 24px 70px rgba(28,34,45,.28)}
+.procurement-status-dialog::backdrop{background:rgba(28,34,45,.55)}
+.procurement-status-dialog form{padding:24px}
+.procurement-status-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 18px;margin:17px 0;padding:14px;border:1px solid var(--line);border-radius:10px;background:#f7f8f7}
+.procurement-status-summary strong,.procurement-status-summary small{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.procurement-status-summary small{color:var(--muted);font-size:9px}
+.procurement-status-summary span{grid-column:2;grid-row:1/3;align-self:center;font-size:15px;font-weight:800;white-space:nowrap}
+.procurement-status-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.procurement-status-fields label,.procurement-status-note{font-size:9px;font-weight:700}
+.procurement-status-fields input,.procurement-status-fields textarea,.procurement-status-note textarea{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:9px 10px;border:1px solid #dfe2ea;border-radius:8px;background:#fff;font:inherit}
+.procurement-status-note{display:block;margin-top:13px}
+.procurement-status-note textarea{min-height:72px;resize:vertical}
+.procurement-status-select{min-width:126px;padding:7px 8px;border:1px solid #d7dad8;border-radius:8px;background:#f7f8f7;color:var(--primary);font:inherit;font-size:9px;font-weight:800}
+.procurement-status-select.kismi-teslim{border-color:#e7c45d;background:#fff8df;color:#805b00}
+.procurement-status-select.gerceklesti{border-color:#a9d3be;background:#eef8f2;color:#14714b}
+.procurement-status-select.iptal-edildi{border-color:#e1c3c3;background:#fff1f1;color:#a23535}
+.cancelled-procurement-row{background:#fafafa;opacity:.72}
+.procurement-row-actions{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.procurement-row-actions button{padding:6px 8px;font-size:8px}
+@media(max-width:560px){.purchase-subtabs{overflow-x:auto;flex-wrap:nowrap}.purchase-subtabs button{flex:0 0 auto}.procurement-status-dialog form{padding:17px}.procurement-status-fields{grid-template-columns:1fr}.procurement-status-summary span{grid-column:1;grid-row:auto;margin-top:5px}}
