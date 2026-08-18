@@ -102,10 +102,10 @@
   ];
   fields.procurement = [
     ['projectId', 'Proje', 'project', ''], ['materialCode', 'Malzeme kodu', 'text', ''], ['materialDescription', 'Malzeme tanımı', 'text', 'full'],
-    ['technicalSpec', 'Teknik özellik', 'textarea', 'full'], ['quantity', 'Miktar', 'number', ''], ['requestDate', 'Talep tarihi', 'date', ''],
+    ['technicalSpec', 'Teknik özellik', 'textarea', 'full'], ['quantity', 'Miktar', 'number', ''], ['unit', 'Birim', 'text', ''],
+    ['orderedAmount', 'Sipariş / taahhüt tutarı', 'currencyOptional', ''], ['requestDate', 'Talep tarihi', 'date', ''],
     ['quoteStatus', 'Teklif durumu', 'quoteStatus', ''], ['vendor', 'Kayıtlı tedarikçi', 'supplierSelect', 'full'], ['orderDate', 'Sipariş tarihi', 'dateOptional', ''],
-    ['dueDate', 'Termin tarihi', 'date', ''], ['actualDeliveryDate', 'Gerçek teslim tarihi', 'dateOptional', ''],
-    ['receivedQuantity', 'Gelen miktar', 'numberOptional', ''], ['qualityResult', 'Kalite kontrol sonucu', 'qualityResult', ''],
+    ['dueDate', 'Termin tarihi', 'date', ''], ['qualityResult', 'Kalite kontrol sonucu', 'qualityResult', ''],
     ['owner', 'Satın alma sorumlusu', 'userSelect', ''], ['longLead', 'Uzun terminli ürün', 'yesNo', '']
   ];
   fields.manufacturing = [
@@ -289,10 +289,24 @@
       const [type, id] = button.dataset.enterpriseEdit.split(':');
       openDialog(type, id);
     });
-    root?.querySelectorAll('[data-enterprise-delete]').forEach(button => button.onclick = () => {
+    root?.querySelectorAll('[data-enterprise-delete]').forEach(button => button.onclick = async () => {
       const [type, id] = button.dataset.enterpriseDelete.split(':'), collection = data[type + 's'];
       const record = collection?.find(item => String(item.id) === id);
-      if (!record || !confirm('Bu kayıt silinsin mi?')) return;
+      if (!record) return;
+      if (type === 'task') {
+        if (!confirm('Görev silinsin mi?')) return;
+        await removeTaskRecord(record);
+        save();
+        if (currentDetailId && $('#projectDetail').classList.contains('active')) renderProjectDetail();
+        return;
+      }
+      if (type === 'cost') {
+        if (!removeCostRecord(record)) return;
+        save();
+        if (currentDetailId && $('#projectDetail').classList.contains('active')) renderProjectDetail();
+        return;
+      }
+      if (!confirm('Bu kayıt silinsin mi?')) return;
       data[type + 's'] = collection.filter(item => String(item.id) !== id);
       addActivity(record.projectId || projectId, 'Kayıt silindi', record.title || record.description || record.materialDescription || record.request || record.nonconformity || type, type === 'document' ? 'file' : 'update');
       save();
@@ -322,7 +336,7 @@
 
   function renderEnterpriseCosts(p) {
     const costs = data.costs.filter(cost => cost.projectId === p.id).sort((a, b) => b.date.localeCompare(a.date));
-    const procurementRecords = data.procurements.filter(record => +record.projectId === +p.id);
+    const procurementRecords = data.procurements.filter(record => +record.projectId === +p.id && !['Gerçekleşti', 'İptal edildi'].includes(record.procurementStatus));
     const procurementAmountInBaseCurrency = record => {
       const amount = +record.orderedAmount || 0;
       const currency = String(record.currency || 'TRY').toUpperCase();
@@ -332,7 +346,7 @@
     };
     const budget = costs.reduce((sum, cost) => sum + (+cost.budgetAmount || 0), 0) || p.budget;
     const manualOrdered = costs.reduce((sum, cost) => sum + (+cost.orderedAmount || 0), 0);
-    const manualOpenCommitment = costs.reduce((sum, cost) => sum + Math.max(0, (+cost.orderedAmount || 0) - (+cost.amount || 0)), 0);
+    const manualOpenCommitment = costs.reduce((sum, cost) => sum + (cost.commitmentClosed ? 0 : Math.max(0, (+cost.orderedAmount || 0) - (+cost.amount || 0))), 0);
     const procurementCommitment = procurementRecords.reduce((sum, record) => sum + procurementAmountInBaseCurrency(record), 0);
     const ordered = manualOrdered + procurementCommitment;
     const openCommitment = manualOpenCommitment + procurementCommitment;
@@ -344,7 +358,7 @@
     const forecast = actual + openCommitment + remaining, deviation = forecast - budget;
     const availableBudget = budget - actual - openCommitment;
     const root = $('#detailCosts');
-    root.innerHTML = `${panelToolbar('Bütçe ve maliyet kontrolü', 'Direkt işçilik, endirekt işçilik ve işçilik dışı giderlerin ayrı izlendiği bütçe karşılaştırması.', 'cost', 'Maliyet kalemi ekle')}<div class="detail-cost-summary enterprise-kpis"><article><span>Kalem bütçesi</span><strong class="budget-text">${money(budget)}</strong></article><article class="direct-labor-summary"><span>Direkt işçilik</span><strong>${money(directLabor)}</strong></article><article class="indirect-labor-summary"><span>Endirekt işçilik</span><strong>${money(indirectLabor)}</strong></article><article><span>İşçilik dışı</span><strong class="expense-text">${money(nonLabor)}</strong></article><article class="procurement-commitment-summary"><span>Sipariş / Taahhüt</span><strong>${money(ordered)}</strong><small>Satın alma: ${money(procurementCommitment)} · KDV hariç</small></article><article><span>Gerçekleşen</span><strong class="expense-text">${money(actual)}</strong></article><article><span>Tahmini final</span><strong class="${forecast > budget ? 'expense-text' : 'budget-text'}">${money(forecast)}</strong></article><article class="available-budget-summary"><span>Kullanılabilir bütçe</span><strong class="${availableBudget < 0 ? 'expense-text' : 'budget-text'}">${money(availableBudget)}</strong><small>Gerçekleşen ve açık taahhüt sonrası</small></article><article><span>Sapma</span><strong class="${deviation > 0 ? 'expense-text' : 'budget-text'}">${deviation > 0 ? '+' : ''}${money(deviation)}</strong></article></div><p class="cost-commitment-note">Satın almaya aktarılan teklif kalemleri sipariş/taahhüt tutarına otomatik eklenir; satın alma kalemi silindiğinde tutar bütçeden otomatik düşer.</p><article class="panel table-panel"><div class="table-wrap"><table class="enterprise-table"><thead><tr><th>Kalem</th><th>Maliyet türü</th><th>Kategori</th><th class="right">Bütçe</th><th class="right">Sipariş</th><th class="right">Gerçekleşen</th><th class="right">Kalan tahmin</th><th class="right">Final</th><th class="right">Sapma</th><th></th></tr></thead><tbody>${costs.map(cost => {
+    root.innerHTML = `${panelToolbar('Bütçe ve maliyet kontrolü', 'Direkt işçilik, endirekt işçilik ve işçilik dışı giderlerin ayrı izlendiği bütçe karşılaştırması.', 'cost', 'Maliyet kalemi ekle')}<div class="detail-cost-summary enterprise-kpis"><article><span>Kalem bütçesi</span><strong class="budget-text">${money(budget)}</strong></article><article class="direct-labor-summary"><span>Direkt işçilik</span><strong>${money(directLabor)}</strong></article><article class="indirect-labor-summary"><span>Endirekt işçilik</span><strong>${money(indirectLabor)}</strong></article><article><span>İşçilik dışı</span><strong class="expense-text">${money(nonLabor)}</strong></article><article class="procurement-commitment-summary"><span>Toplam sipariş</span><strong>${money(ordered)}</strong><small>Açık taahhüt: ${money(openCommitment)} · KDV hariç</small></article><article><span>Gerçekleşen</span><strong class="expense-text">${money(actual)}</strong></article><article><span>Tahmini final</span><strong class="${forecast > budget ? 'expense-text' : 'budget-text'}">${money(forecast)}</strong></article><article class="available-budget-summary"><span>Kullanılabilir bütçe</span><strong class="${availableBudget < 0 ? 'expense-text' : 'budget-text'}">${money(availableBudget)}</strong><small>Gerçekleşen ve açık taahhüt sonrası</small></article><article><span>Sapma</span><strong class="${deviation > 0 ? 'expense-text' : 'budget-text'}">${deviation > 0 ? '+' : ''}${money(deviation)}</strong></article></div><p class="cost-commitment-note">Açık satın alma kalemleri taahhüt olarak izlenir; “Gerçekleşti” durumunda taahhüt kapanır ve tutar gerçekleşen gidere dönüşür.</p><article class="panel table-panel"><div class="table-wrap"><table class="enterprise-table"><thead><tr><th>Kalem</th><th>Maliyet türü</th><th>Kategori</th><th class="right">Bütçe</th><th class="right">Sipariş</th><th class="right">Gerçekleşen</th><th class="right">Kalan tahmin</th><th class="right">Final</th><th class="right">Sapma</th><th></th></tr></thead><tbody>${costs.map(cost => {
       const final = (+cost.amount || 0) + (+cost.remainingEstimate || 0), variance = final - (+cost.budgetAmount || 0);
       return `<tr><td><strong>${esc(cost.description)}</strong><small>${date(cost.date)} · ${esc(cost.vendor || '—')}</small></td><td><span class="cost-type ${cost.costType === 'Direkt İşçilik' ? 'direct-labor' : cost.costType === 'Endirekt İşçilik' ? 'indirect-labor' : 'non-labor'}">${esc(cost.costType)}</span></td><td><span class="category">${esc(cost.category)}</span></td><td class="right budget-text">${money(cost.budgetAmount)}</td><td class="right">${money(cost.orderedAmount)}</td><td class="right expense-text">${money(cost.amount)}</td><td class="right">${money(cost.remainingEstimate)}</td><td class="right"><strong>${money(final)}</strong></td><td class="right ${variance > 0 ? 'expense-text' : 'budget-text'}">${variance > 0 ? '+' : ''}${money(variance)}</td><td>${recordButtons('cost', cost.id)}</td></tr>`;
     }).join('') || `<tr><td colspan="10">${empty('Bu projeye maliyet kalemi eklenmemiş.')}</td></tr>`}</tbody></table></div></article>`;
@@ -448,7 +462,7 @@
   function renderManagementSummary() {
     const root = $('#managementSummary');
     if (!root) return;
-    const today = todayIso(), month = today.slice(0, 7), active = data.projects.filter(p => p.projectStatus !== 'Tamamlandı'), delayed = active.filter(p => p.end < today && progress(p.id) < 100), overBudget = data.projects.filter(p => spent(p.id) > p.budget), criticalPurchases = data.procurements.filter(item => item.longLead === 'true' && (+item.receivedQuantity || 0) < (+item.quantity || 0)), openRisks = data.risks.filter(item => !['Kapandı', 'Azaltıldı'].includes(item.status)), openActions = data.actions.filter(item => !['Tamamlandı', 'İptal'].includes(item.status)), dueThisMonth = data.projects.filter(p => (p.end || '').slice(0, 7) === month);
+    const today = todayIso(), month = today.slice(0, 7), active = data.projects.filter(p => p.projectStatus !== 'Tamamlandı'), delayed = active.filter(p => p.end < today && progress(p.id) < 100), overBudget = data.projects.filter(p => budgetUsed(p.id) > p.budget), criticalPurchases = data.procurements.filter(item => !['Gerçekleşti', 'İptal edildi'].includes(item.procurementStatus) && item.longLead === 'true' && (+item.receivedQuantity || 0) < (+item.quantity || 0)), openRisks = data.risks.filter(item => !['Kapandı', 'Azaltıldı'].includes(item.status)), openActions = data.actions.filter(item => !['Tamamlandı', 'İptal'].includes(item.status)), dueThisMonth = data.projects.filter(p => (p.end || '').slice(0, 7) === month);
     const cards = [
       ['Zamanında ilerleyen', Math.max(0, active.length - delayed.length), 'good'], ['Geciken projeler', delayed.length, delayed.length ? 'danger' : 'good'],
       ['Bütçeyi aşan', overBudget.length, overBudget.length ? 'danger' : 'good'], ['Kritik satın alma', criticalPurchases.length, criticalPurchases.length ? 'warning' : 'good'],
