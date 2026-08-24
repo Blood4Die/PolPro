@@ -6,6 +6,7 @@
   }[char]));
   const todayIso = () => new Date().toISOString().slice(0, 10);
   const formatDate = value => value ? new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value + 'T12:00:00')) : '—';
+  const managedList = (key, fallback) => window.PolProLists?.get?.(key, fallback) || fallback;
   const probabilityOptions = [
     ['0.2', '0,2 — Pratik olarak imkânsız'], ['0.5', '0,5 — Çok düşük'], ['1', '1 — Olası değil'],
     ['3', '3 — Olası'], ['6', '6 — Yüksek olasılık'], ['10', '10 — Beklenir']
@@ -18,12 +19,12 @@
     ['1', '1 — Ramak kala / ihmal edilebilir etki'], ['3', '3 — Hafif yaralanma / sınırlı çevresel etki'], ['7', '7 — Ciddi yaralanma / yerel çevresel etki'],
     ['15', '15 — Kalıcı hasar / ciddi çevresel etki'], ['40', '40 — Ölümcül / geniş çevresel zarar'], ['100', '100 — Çoklu ölüm / kalıcı ve yaygın çevresel zarar']
   ];
-  const riskTypes = ['İSG', 'Çevre', 'İSG ve Çevre'];
-  const hazardCategories = ['Elektrik', 'Mekanik', 'Yüksekte çalışma', 'Kaldırma / taşıma', 'Yangın / patlama', 'Kimyasal', 'Kapalı alan', 'Ergonomi', 'Gürültü / fiziksel etken', 'Diğer'];
-  const environmentalFactors = ['Uygulanmaz', 'Atık oluşumu', 'Kimyasal dökülme / sızıntı', 'Hava emisyonu / toz', 'Atık su / su kirliliği', 'Toprak kirliliği', 'Gürültü / titreşim', 'Enerji tüketimi', 'Su tüketimi', 'Doğal kaynak kullanımı', 'Biyoçeşitlilik', 'Diğer'];
-  const activityTypes = ['Rutin', 'Rutin dışı', 'Acil durum'];
-  const controlMethods = ['Tehlikeyi ortadan kaldırma', 'İkame', 'Mühendislik önlemi', 'İdari önlem', 'KKD'];
-  const actionStatuses = ['Açık', 'Devam ediyor', 'Doğrulama bekliyor'];
+  const riskTypes = managedList('ohsRiskTypes', ['İSG', 'Çevre', 'İSG ve Çevre']);
+  const hazardCategories = managedList('hazardCategories', ['Elektrik', 'Mekanik', 'Yüksekte çalışma', 'Kaldırma / taşıma', 'Yangın / patlama', 'Kimyasal', 'Kapalı alan', 'Ergonomi', 'Gürültü / fiziksel etken', 'Diğer']);
+  const environmentalFactors = managedList('environmentalFactors', ['Uygulanmaz', 'Atık oluşumu', 'Kimyasal dökülme / sızıntı', 'Hava emisyonu / toz', 'Atık su / su kirliliği', 'Toprak kirliliği', 'Gürültü / titreşim', 'Enerji tüketimi', 'Su tüketimi', 'Doğal kaynak kullanımı', 'Biyoçeşitlilik', 'Diğer']);
+  const activityTypes = managedList('ohsActivityTypes', ['Rutin', 'Rutin dışı', 'Acil durum']);
+  const controlMethods = managedList('controlMethods', ['Tehlikeyi ortadan kaldırma', 'İkame', 'Mühendislik önlemi', 'İdari önlem', 'KKD']);
+  const actionStatuses = managedList('ohsActionStatuses', ['Açık', 'Devam ediyor', 'Doğrulama bekliyor']);
 
   data.ohsRisks = Array.isArray(data.ohsRisks) ? data.ohsRisks.filter(record => record && typeof record === 'object') : [];
   data.ohsRisks.forEach((record, index) => {
@@ -140,12 +141,12 @@
       html = `<div class="ohs-form-grid">
         <label>Bağlı görev / iş adımı<select name="taskId">${taskOptions()}</select></label>
         <label>Çalışma alanı<input name="area" type="text" value="${fieldValue('area')}" placeholder="Örn. Ana elektrik odası" required></label>
-        <label>Risk alanı<select name="riskType" id="ohsRiskType">${textOptions(riskTypes, draft.riskType)}</select></label>
-        <label>Faaliyet türü<select name="activityType">${textOptions(activityTypes, draft.activityType)}</select></label>
-        <label>Tehlike kategorisi<select name="hazardCategory">${textOptions(hazardCategories, draft.hazardCategory)}</select></label>
-        <label>Çevresel risk faktörü<select name="environmentalFactor" id="ohsEnvironmentalFactor">${textOptions(environmentalFactors, draft.environmentalFactor)}</select></label>
+        <label>Risk alanı<select name="riskType" id="ohsRiskType">${textOptions(managedList('ohsRiskTypes', riskTypes), draft.riskType)}</select></label>
+        <label>Faaliyet türü<select name="activityType">${textOptions(managedList('ohsActivityTypes', activityTypes), draft.activityType)}</select></label>
+        <label>Tehlike kategorisi<select name="hazardCategory">${textOptions(managedList('hazardCategories', hazardCategories), draft.hazardCategory)}</select></label>
+        <label>Çevresel risk faktörü<select name="environmentalFactor" id="ohsEnvironmentalFactor">${textOptions(managedList('environmentalFactors', environmentalFactors), draft.environmentalFactor)}</select></label>
         <label class="full">Tehlike / çevresel boyut ve olası sonuç<textarea name="hazardDescription" rows="3" required>${fieldValue('hazardDescription')}</textarea></label>
-        <label>Etkilenen kişi / çevresel alıcı<select name="affectedPeople">${textOptions(['Çalışanlar', 'Çalışanlar ve taşeronlar', 'Ziyaretçiler', 'Tüm saha personeli', 'Hava', 'Su', 'Toprak', 'Doğal kaynaklar', 'Flora / fauna', 'Çevre halkı', 'Birden fazla alıcı'], draft.affectedPeople)}</select></label>
+        <label>Etkilenen kişi / çevresel alıcı<select name="affectedPeople">${textOptions(managedList('affectedGroups', ['Çalışanlar', 'Çalışanlar ve taşeronlar', 'Ziyaretçiler', 'Tüm saha personeli', 'Hava', 'Su', 'Toprak', 'Doğal kaynaklar', 'Flora / fauna', 'Çevre halkı', 'Birden fazla alıcı']), draft.affectedPeople)}</select></label>
         <label>Değerlendirme tarihi<input name="evaluationDate" type="date" value="${fieldValue('evaluationDate')}" required></label>
         <label>Revizyon<input class="ohs-revision" name="revision" type="text" value="${fieldValue('revision')}" required></label>
         <label class="full">Mevcut önlemler / çevresel kontroller<textarea name="existingControls" rows="3" required>${fieldValue('existingControls')}</textarea></label>
@@ -160,11 +161,11 @@
       </div>`;
     } else if (step === 2) {
       html = `<div class="ohs-form-grid">
-        <label>Kontrol yöntemi<select name="controlMethod">${textOptions(controlMethods, draft.controlMethod)}</select></label>
+        <label>Kontrol yöntemi<select name="controlMethod">${textOptions(managedList('controlMethods', controlMethods), draft.controlMethod)}</select></label>
         <label>Faaliyet sorumlusu<select name="owner">${userOptions(draft.owner, 'Sorumlu seçin')}</select></label>
         <label class="full">Alınacak önlem<textarea name="preventiveAction" rows="4" required>${fieldValue('preventiveAction')}</textarea></label>
         <label>Hedef tarih<input name="targetDate" type="date" value="${fieldValue('targetDate')}" required></label>
-        <label>Faaliyet durumu<select name="status">${textOptions(actionStatuses, draft.status)}</select></label>
+        <label>Faaliyet durumu<select name="status">${textOptions(managedList('ohsActionStatuses', actionStatuses), draft.status)}</select></label>
       </div>`;
     } else {
       html = `<div class="ohs-form-grid">
@@ -335,7 +336,7 @@
 
     root.innerHTML = `<div class="ohs-toolbar"><div><h3>İSG ve Çevre Risk Analizi</h3><p>İSG tehlikeleri ve çevresel risk faktörleri için Fine–Kinney puanı, önlem, artık risk ve doğrulama kayıtları.</p></div><button class="primary permission-create" id="addOhsRisk">+ Yeni risk kaydı</button></div>
       <div class="ohs-stats"><article><span>Toplam risk</span><strong>${activeRecords.length}</strong><small>Bu proje</small></article><article><span>Yüksek / çok yüksek</span><strong class="danger">${highRecords.length}</strong><small>Önlem veya onay bekliyor</small></article><article><span>Doğrulama bekleyen</span><strong>${awaitingApproval.length}</strong><small>Yönetici onayı gerekli</small></article></div>
-      <div class="ohs-filterbar"><input id="ohsRiskSearch" type="search" placeholder="Faaliyet, tehlike, çevre faktörü veya sorumlu ara..."><select id="ohsRiskTypeFilter"><option value="">Tüm risk alanları</option>${textOptions(riskTypes)}</select><select id="ohsRiskStatus"><option value="">Tüm durumlar</option>${textOptions(['Taslak', 'Onay bekliyor', 'Onaylandı', 'İptal'])}</select></div>
+      <div class="ohs-filterbar"><input id="ohsRiskSearch" type="search" placeholder="Faaliyet, tehlike, çevre faktörü veya sorumlu ara..."><select id="ohsRiskTypeFilter"><option value="">Tüm risk alanları</option>${textOptions(managedList('ohsRiskTypes', riskTypes))}</select><select id="ohsRiskStatus"><option value="">Tüm durumlar</option>${textOptions(managedList('ohsApprovalStatuses', ['Taslak', 'Onay bekliyor', 'Onaylandı', 'İptal']))}</select></div>
       <article class="panel table-panel"><div class="table-wrap"><table class="enterprise-table ohs-table"><thead><tr><th>No / Tür</th><th>Faaliyet / Tehlike / Çevresel boyut</th><th>İlk risk</th><th>Önlem ve sorumlu</th><th>Artık risk</th><th>Durum</th><th></th></tr></thead><tbody id="ohsRiskRows"></tbody></table></div></article>`;
 
     const renderRows = () => {

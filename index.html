@@ -10,6 +10,7 @@
   <title>PolPro — Proje ve Maliyet Yönetimi</title>
   <link rel="stylesheet" href="styles.css?v=20260722-6">
   <link rel="stylesheet" href="admin.css?v=20260722-2">
+  <link rel="stylesheet" href="list-settings.css?v=20260824-1">
   <link rel="stylesheet" href="auth.css?v=20260721-3">
   <link rel="stylesheet" href="exit.css?v=20260721-1">
   <link rel="stylesheet" href="project-detail.css?v=20260720-3">
@@ -23,7 +24,7 @@
   <link rel="stylesheet" href="task-files.css">
   <link rel="stylesheet" href="cost-operations.css?v=20260721-3">
   <link rel="stylesheet" href="supplier-evaluation.css?v=20260727-3">
-  <link rel="stylesheet" href="enterprise.css?v=20260824-gantt-4">
+  <link rel="stylesheet" href="enterprise.css?v=20260824-gantt-actual-1">
   <link rel="stylesheet" href="procurement-quotes.css?v=20260817-lifecycle-3">
   <link rel="stylesheet" href="isg-risk.css?v=20260723-2">
 </head>
@@ -131,14 +132,14 @@
 
       <section id="admin" class="page">
         <div class="section-tools"><div><h2>Kullanıcı ve personel yönetimi</h2><p>Giriş yetkilerini ve projelerde görevlendirilecek personel kayıtlarını ayrı yönetin.</p></div></div>
-        <div class="planning-tabs"><button class="active" data-admin-tab="accounts">Giriş hesapları</button><button data-admin-tab="users">Personel / kaynaklar</button><button data-admin-tab="categories">Kategoriler</button></div>
+        <div class="planning-tabs"><button class="active" data-admin-tab="accounts">Giriş hesapları</button><button data-admin-tab="users">Personel / kaynaklar</button><button data-admin-tab="lists">Liste ayarları</button></div>
         <div id="accountsPanel" class="admin-panel active">
           <div class="account-toolbar"><div><h3>Supabase giriş hesapları</h3><p>Uygulamaya giriş yapabilen hesaplar. Yalnızca yöneticiler değiştirebilir.</p></div><button class="primary" id="addLoginAccount">+ Giriş hesabı ekle</button></div>
           <div id="accountStatus" class="account-status">Hesaplar yükleniyor...</div>
           <div id="accountStats" class="cost-summary"></div><div id="accountGrid" class="user-grid"></div>
         </div>
         <div id="usersPanel" class="admin-panel"><div class="account-toolbar"><div><h3>Personel / kaynaklar</h3><p>Proje lideri, ekip üyesi ve görev sorumlusu olarak seçilecek kişiler.</p></div><button class="primary" data-open="user">+ Personel ekle</button></div><div id="userStats" class="cost-summary"></div><div id="userGrid" class="user-grid"></div></div>
-        <div id="categoriesPanel" class="admin-panel"><div class="admin-columns"><article class="panel"><div class="panel-head"><div><p class="kicker">ORGANİZASYON</p><h3>Kullanıcı kategorileri</h3></div><button class="link" id="addCategory">+ Kategori</button></div><div id="categoryList" class="setting-list"></div></article></div></div>
+        <div id="listSettingsPanel" class="admin-panel"><div class="list-settings-loading">Liste ayarları hazırlanıyor...</div></div>
       </section>
     </main>
   </div>
@@ -150,6 +151,6 @@
   <script src="config.js?v=20260720-6"></script>
   <script src="preflight.js?v=20260722-cloud-1"></script>
   <script src="backend.js?v=20260722-cloud-2"></script>
-  <script src="cloud-bootstrap.js?v=20260824-gantt-4"></script>
+  <script src="cloud-bootstrap.js?v=20260824-gantt-actual-1"></script>
 </body>
 </html>

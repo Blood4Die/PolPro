@@ -11,6 +11,7 @@
   const statusClass = value => String(value || '').toLocaleLowerCase('tr')
     .replaceAll('ı', 'i').replaceAll('ş', 's').replaceAll('ğ', 'g').replaceAll('ü', 'u').replaceAll('ö', 'o').replaceAll('ç', 'c').replace(/[^a-z0-9]+/g, '-');
   const selectOptions = (name, values, placeholder = '') => `<select name="${name}" ${placeholder ? 'required' : ''}>${placeholder ? `<option value="">${placeholder}</option>` : ''}${values.map(value => `<option>${value}</option>`).join('')}</select>`;
+  const managedList = (key, fallback) => window.PolProLists?.get?.(key, fallback) || fallback;
 
   const workPackages = ['İhtiyaçların Belirlenmesi', 'Konsept Tasarım', 'Mühendislik ve Tasarım', 'Detay Mühendislik', 'Mekanik Tasarım', 'Elektrik ve Otomasyon Tasarımı', 'Malzeme Listesi', 'Satın Alma', 'Saha Hazırlığı ve İnşaat', 'Lazer Kesim', 'Kaynak', 'Talaşlı İmalat', 'Boya ve Yüzey İşlemleri', 'Mekanik Montaj', 'Elektrik Montajı', 'Elektrik ve Otomasyon', 'Yazılım', 'Test ve Devreye Alma', 'Teslim ve Eğitim', 'Müşteri Kabulü'];
   const resourceGroups = ['Mekanik Tasarım', 'Satın Alma', 'İnşaat / Saha', 'Elektrik Tasarım', 'Elektrik', 'Kaynak Atölyesi', 'CNC', 'Montaj', 'Otomasyon', 'Test Alanı', 'Eğitim', 'Proje Yönetimi'];
@@ -177,25 +178,25 @@
     if (type === 'percentage') return `<input name="${id}" type="number" min="0" max="100" step="1" value="0" required>`;
     if (type === 'percentageOptional') return `<input name="${id}" type="number" min="0" max="100" step="1" placeholder="Görevlerden hesapla">`;
     if (type === 'userMultiOptional') return `<select name="${id}" multiple size="${Math.min(5, Math.max(3, activeUsers.length))}" class="multi-select">${activeUsers.map(user => `<option value="${user.name}">${user.name} · ${user.category}</option>`).join('')}</select><span class="field-hint">Birden fazla kişi için Ctrl tuşunu kullanın.</span>`;
-    if (type === 'projectStatus') return selectOptions(id, projectStatuses);
-    if (type === 'workPackage') return selectOptions(id, workPackages);
-    if (type === 'resourceGroup') return selectOptions(id, resourceGroups);
+    if (type === 'projectStatus') return selectOptions(id, managedList('projectStatuses', projectStatuses));
+    if (type === 'workPackage') return selectOptions(id, managedList('workPackages', workPackages));
+    if (type === 'resourceGroup') return selectOptions(id, managedList('resourceGroups', resourceGroups));
     if (type === 'taskPredecessor') return `<select name="${id}"><option value="">Bağlantı yok</option>${data.tasks.filter(task => String(task.id) !== String(editingId)).map(task => `<option value="${task.id}">${project(task.projectId)?.code || ''} · ${task.title}</option>`).join('')}</select>`;
     if (type === 'yesNo') return `<select name="${id}"><option value="false">Hayır</option><option value="true">Evet</option></select>`;
-    if (type === 'milestoneType') return `<select name="${id}"><option value="">Seçilmedi</option>${['Tasarım Onayı', 'Malzeme Siparişi', 'İmalat Başlangıcı', 'Montaj Başlangıcı', 'FAT', 'SAT', 'Proje Teslimi'].map(value => `<option>${value}</option>`).join('')}</select>`;
-    if (type === 'quoteStatus') return selectOptions(id, ['Talep Açıldı', 'Teklif Bekleniyor', 'Teklif Alındı', 'Onaylandı', 'Sipariş Verildi', 'İptal']);
-    if (type === 'qualityResult') return selectOptions(id, ['Bekliyor', 'Uygun', 'Şartlı Kabul', 'Uygun Değil']);
-    if (type === 'manufacturingStatus') return selectOptions(id, ['Planlandı', 'Devam Ediyor', 'Kontrolde', 'Tamamlandı', 'Beklemede']);
+    if (type === 'milestoneType') return `<select name="${id}"><option value="">Seçilmedi</option>${managedList('milestoneTypes', ['Tasarım Onayı', 'Malzeme Siparişi', 'İmalat Başlangıcı', 'Montaj Başlangıcı', 'FAT', 'SAT', 'Proje Teslimi']).map(value => `<option>${value}</option>`).join('')}</select>`;
+    if (type === 'quoteStatus') return selectOptions(id, managedList('quoteRequestStatuses', ['Talep Açıldı', 'Teklif Bekleniyor', 'Teklif Alındı', 'Onaylandı', 'Sipariş Verildi', 'İptal']));
+    if (type === 'qualityResult') return selectOptions(id, managedList('qualityResults', ['Bekliyor', 'Uygun', 'Şartlı Kabul', 'Uygun Değil']));
+    if (type === 'manufacturingStatus') return selectOptions(id, managedList('manufacturingStatuses', ['Planlandı', 'Devam Ediyor', 'Kontrolde', 'Tamamlandı', 'Beklemede']));
     if (type === 'riskLevel') return selectOptions(id, ['Düşük', 'Orta', 'Yüksek']);
-    if (type === 'riskStatus') return selectOptions(id, ['Açık', 'İzleniyor', 'Azaltıldı', 'Gerçekleşti', 'Kapandı']);
-    if (type === 'issueStatus') return selectOptions(id, ['Açık', 'Devam Ediyor', 'Çözüldü', 'Kapandı']);
-    if (type === 'changeStatus') return selectOptions(id, ['Taslak', 'Onay Bekliyor', 'Onaylandı', 'Reddedildi', 'Uygulandı']);
-    if (type === 'actionStatus') return selectOptions(id, ['Açık', 'Devam Ediyor', 'Tamamlandı', 'Gecikti', 'İptal']);
+    if (type === 'riskStatus') return selectOptions(id, managedList('riskStatuses', ['Açık', 'İzleniyor', 'Azaltıldı', 'Gerçekleşti', 'Kapandı']));
+    if (type === 'issueStatus') return selectOptions(id, managedList('issueStatuses', ['Açık', 'Devam Ediyor', 'Çözüldü', 'Kapandı']));
+    if (type === 'changeStatus') return selectOptions(id, managedList('changeStatuses', ['Taslak', 'Onay Bekliyor', 'Onaylandı', 'Reddedildi', 'Uygulandı']));
+    if (type === 'actionStatus') return selectOptions(id, managedList('actionStatuses', ['Açık', 'Devam Ediyor', 'Tamamlandı', 'Gecikti', 'İptal']));
     if (type === 'projectFile') { const files = currentDetailId ? data.files.filter(file => file.projectId === currentDetailId) : data.files; return `<select name="${id}" required><option value="">Dosya seçin</option>${files.map(file => `<option value="${file.id}">${project(file.projectId)?.code || ''} · ${esc(file.name)}</option>`).join('')}</select>`; }
-    if (type === 'documentType') return selectOptions(id, ['Teknik Şartname', 'Konsept Çizimi', '3D Model', 'İmalat Resmi', 'Elektrik Şeması', 'PLC Yazılımı', 'Malzeme Listesi', 'Kullanım Kılavuzu', 'Test Raporu', 'Kabul Tutanağı']);
-    if (type === 'documentStatus') return selectOptions(id, ['Taslak', 'Kontrolde', 'Onaylandı', 'İptal']);
-    if (type === 'qualityType') return selectOptions(id, ['Giriş Kalite Kontrol', 'Kaynak Kontrolü', 'Ölçü Kontrolü', 'Boyutsal Rapor', 'Elektrik Güvenlik Testi', 'Basınç Testi', 'Fonksiyon Testi', 'Boşta Çalışma Testi', 'Yük Altında Çalışma Testi', 'FAT', 'SAT', 'Eksik İşler Listesi', 'Müşteri Kabul Tutanağı']);
-    if (type === 'qualityStatus') return selectOptions(id, ['Planlandı', 'Uygun', 'Şartlı Kabul', 'Uygunsuz', 'Kapandı']);
+    if (type === 'documentType') return selectOptions(id, managedList('documentTypes', ['Teknik Şartname', 'Konsept Çizimi', '3D Model', 'İmalat Resmi', 'Elektrik Şeması', 'PLC Yazılımı', 'Malzeme Listesi', 'Kullanım Kılavuzu', 'Test Raporu', 'Kabul Tutanağı']));
+    if (type === 'documentStatus') return selectOptions(id, managedList('documentStatuses', ['Taslak', 'Kontrolde', 'Onaylandı', 'İptal']));
+    if (type === 'qualityType') return selectOptions(id, managedList('qualityTypes', ['Giriş Kalite Kontrol', 'Kaynak Kontrolü', 'Ölçü Kontrolü', 'Boyutsal Rapor', 'Elektrik Güvenlik Testi', 'Basınç Testi', 'Fonksiyon Testi', 'Boşta Çalışma Testi', 'Yük Altında Çalışma Testi', 'FAT', 'SAT', 'Eksik İşler Listesi', 'Müşteri Kabul Tutanağı']));
+    if (type === 'qualityStatus') return selectOptions(id, managedList('qualityStatuses', ['Planlandı', 'Uygun', 'Şartlı Kabul', 'Uygunsuz', 'Kapandı']));
     if (type === 'satisfaction') return `<select name="${id}"><option value="1">1 — Çok düşük</option><option value="2">2 — Düşük</option><option value="3">3 — Orta</option><option value="4">4 — İyi</option><option value="5">5 — Çok iyi</option></select>`;
     return baseInput(id, type);
   };
@@ -499,7 +500,7 @@
   const ganttTaskSort = (a, b) => (Number.isFinite(+a.ganttOrder) ? +a.ganttOrder : Number.MAX_SAFE_INTEGER) - (Number.isFinite(+b.ganttOrder) ? +b.ganttOrder : Number.MAX_SAFE_INTEGER) || String(a.start || '').localeCompare(String(b.start || ''));
 
   function ganttSnapshot(draft) {
-    return draft.items.map(item => ({ id: item.id, start: item.start, end: item.end, order: item.order }));
+    return draft.items.map(item => ({ id: item.id, start: item.start, end: item.end, actualStart: item.actualStart, actualEnd: item.actualEnd, order: item.order }));
   }
 
   function ganttRestoreSnapshot(draft, snapshot) {
@@ -510,7 +511,7 @@
   }
 
   function ganttDraftChanges(draft) {
-    return draft.items.filter(item => item.start !== item.savedStart || item.end !== item.savedEnd || item.order !== item.savedOrder);
+    return draft.items.filter(item => item.start !== item.savedStart || item.end !== item.savedEnd || item.actualStart !== item.savedActualStart || item.actualEnd !== item.savedActualEnd || item.order !== item.savedOrder);
   }
 
   function renderGanttDraft(draft) {
@@ -525,10 +526,18 @@
       item.bar.style.left = `${left}%`;
       item.bar.style.width = `${Math.max(.35, right - left)}%`;
       item.bar.classList.toggle('gantt-draft-changed', item.start !== item.savedStart || item.end !== item.savedEnd);
+      if (item.actualBar && item.actualStart) {
+        const actualEnd = item.actualEnd || todayIso(), actualLeft = Math.max(0, Math.min(100, ganttDays(draft.project.start, item.actualStart) / draft.spanDays * 100)), actualRight = Math.max(0, Math.min(100, ganttDays(draft.project.start, actualEnd) / draft.spanDays * 100));
+        item.actualBar.style.left = `${actualLeft}%`;
+        item.actualBar.style.width = `${Math.max(1, actualRight - actualLeft)}%`;
+        item.actualBar.classList.toggle('gantt-actual-changed', item.actualStart !== item.savedActualStart || item.actualEnd !== item.savedActualEnd);
+        item.actualBar.setAttribute('aria-label', `${item.task.title} gerçekleşen: ${date(item.actualStart)} – ${item.actualEnd ? date(item.actualEnd) : 'devam ediyor'}`);
+      }
       item.row.classList.toggle('gantt-order-changed', item.order !== item.savedOrder);
       item.row.querySelector('[data-gantt-order="-1"]').disabled = index === 0;
       item.row.querySelector('[data-gantt-order="1"]').disabled = index === ordered.length - 1;
-      item.label.textContent = `${item.task.assignee} · ${date(item.start)} – ${date(item.end)}${item.suffix}`;
+      const actualText = item.actualStart ? ` · Gerçek: ${date(item.actualStart)}${item.actualEnd ? `–${date(item.actualEnd)}` : '–devam'}` : '';
+      item.label.textContent = `${item.task.assignee} · ${date(item.start)} – ${date(item.end)}${item.dependency}${actualText}`;
       item.bar.setAttribute('aria-label', `${item.task.title}: ${date(item.start)} – ${date(item.end)}`);
     });
     const changes = ganttDraftChanges(draft), list = panel.querySelector('#ganttPlanChangeList'), box = panel.querySelector('.gantt-plan-changes'), undo = panel.querySelector('#ganttPlanUndo'), saveButton = panel.querySelector('#ganttPlanSave');
@@ -537,8 +546,9 @@
     box.hidden = !draft.editing;
     list.innerHTML = changes.length ? changes.map(item => {
       const dateChange = item.start !== item.savedStart || item.end !== item.savedEnd ? `<span><b>${date(item.savedStart)} – ${date(item.savedEnd)}</b><i>→</i><strong>${date(item.start)} – ${date(item.end)}</strong></span>` : '';
+      const actualChange = item.actualStart !== item.savedActualStart || item.actualEnd !== item.savedActualEnd ? `<span class="gantt-actual-change"><b>Gerçek: ${date(item.savedActualStart)} – ${item.savedActualEnd ? date(item.savedActualEnd) : 'devam'}</b><i>→</i><strong>${date(item.actualStart)} – ${item.actualEnd ? date(item.actualEnd) : 'devam'}</strong></span>` : '';
       const orderChange = item.order !== item.savedOrder ? `<small>Sıra: ${item.savedOrder + 1} → ${item.order + 1}</small>` : '';
-      return `<div><em>${esc(item.task.title)}</em>${dateChange}${orderChange}</div>`;
+      return `<div><em>${esc(item.task.title)}</em>${dateChange}${actualChange}${orderChange}</div>`;
     }).join('') : '<p>Henüz değiştirilmiş görev yok.</p>';
     panel.querySelector('#ganttPlanChangeCount').textContent = `${changes.length} değişiklik`;
   }
@@ -552,8 +562,8 @@
     draft.panel.classList.toggle('gantt-plan-editing', enabled);
     draft.panel.querySelector('#ganttPlanEdit').hidden = enabled;
     draft.panel.querySelector('.gantt-plan-edit-strip').hidden = !enabled;
-    draft.panel.querySelector('#ganttPlanStatus').textContent = enabled ? 'Düzenleme modu açık. Çubuğu taşıyın, uçlarından süreyi değiştirin veya oklarla görev sırasını düzenleyin.' : 'İnceleme modu. Tarihler yanlışlıkla değiştirilemez.';
-    draft.items.forEach(item => { item.bar.tabIndex = enabled ? 0 : -1; });
+    draft.panel.querySelector('#ganttPlanStatus').textContent = enabled ? 'Düzenleme modu açık. Gri plan çubuğunu veya yeşil gerçekleşen çubuğunu ayrı ayrı düzenleyebilirsiniz.' : 'İnceleme modu. Tarihler yanlışlıkla değiştirilemez.';
+    draft.items.forEach(item => { item.bar.tabIndex = enabled ? 0 : -1; if (item.actualBar) item.actualBar.tabIndex = enabled ? 0 : -1; });
     renderGanttDraft(draft);
   }
 
@@ -582,6 +592,30 @@
     }
   }
 
+  function moveGanttActualItem(draft, item, days, mode) {
+    if (!days || !item.actualStart) return;
+    const openActual = !item.actualEnd;
+    if (openActual || mode === 'start') {
+      item.actualStart = ganttAddDays(item.actualStart, days);
+      if (item.actualStart < draft.project.start) item.actualStart = draft.project.start;
+      const limit = item.actualEnd || todayIso();
+      if (item.actualStart > limit) item.actualStart = limit;
+      return;
+    }
+    if (mode === 'end') {
+      item.actualEnd = ganttAddDays(item.actualEnd, days);
+      if (item.actualEnd > draft.project.end) item.actualEnd = draft.project.end;
+      if (item.actualEnd < item.actualStart) item.actualEnd = item.actualStart;
+      return;
+    }
+    const duration = ganttDays(item.actualStart, item.actualEnd);
+    let start = ganttAddDays(item.actualStart, days), end = ganttAddDays(item.actualEnd, days);
+    if (start < draft.project.start) { start = draft.project.start; end = ganttAddDays(start, duration); }
+    if (end > draft.project.end) { end = draft.project.end; start = ganttAddDays(end, -duration); }
+    item.actualStart = start;
+    item.actualEnd = end;
+  }
+
   function bindGanttPlanEditor(draft) {
     const panel = draft.panel;
     panel.querySelector('#ganttPlanEdit').onclick = () => setGanttEditMode(draft, true);
@@ -599,11 +633,14 @@
       changes.forEach(item => {
         item.task.start = item.start;
         item.task.end = item.end;
+        item.task.actualStart = item.actualStart;
+        item.task.actualEnd = item.actualEnd;
         item.task.ganttOrder = item.order;
       });
       const dateCount = changes.filter(item => item.start !== item.savedStart || item.end !== item.savedEnd).length;
+      const actualCount = changes.filter(item => item.actualStart !== item.savedActualStart || item.actualEnd !== item.savedActualEnd).length;
       const orderCount = changes.filter(item => item.order !== item.savedOrder).length;
-      addActivity(draft.project.id, 'Gantt planı güncellendi', `${dateCount} görev tarihi, ${orderCount} görev sırası değiştirildi.`, 'task');
+      addActivity(draft.project.id, 'Gantt planı güncellendi', `${dateCount} plan tarihi, ${actualCount} gerçekleşen tarih, ${orderCount} görev sırası değiştirildi.`, 'task');
       draft.editing = false;
       draft.cleanup?.();
       ganttPlanDraft = null;
@@ -624,7 +661,7 @@
       renderGanttDraft(draft);
     });
     const handleGanttClick = event => {
-      const clickedBar = event.target.closest('.task-range');
+      const clickedBar = event.target.closest('.task-range,.actual-task-range');
       if (!clickedBar) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -666,6 +703,43 @@
         window.addEventListener('pointerup', onEnd, { once: true });
       });
     });
+    panel.querySelectorAll('.actual-task-range').forEach(bar => {
+      bar.addEventListener('keydown', event => {
+        if (!draft.editing || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const item = draft.items.find(candidate => String(candidate.id) === String(bar.dataset.ganttTask));
+        if (!item?.actualStart) return;
+        beginGanttHistory(draft);
+        moveGanttActualItem(draft, item, event.key === 'ArrowRight' ? 1 : -1, item.actualEnd && event.shiftKey ? 'end' : item.actualEnd ? 'move' : 'start');
+        renderGanttDraft(draft);
+      });
+      bar.addEventListener('pointerdown', event => {
+        if (!draft.editing || event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const item = draft.items.find(candidate => String(candidate.id) === String(bar.dataset.ganttTask));
+        if (!item?.actualStart) return;
+        const requestedMode = event.target.closest('[data-gantt-actual-edge]')?.dataset.ganttActualEdge;
+        const mode = requestedMode || (item.actualEnd ? 'move' : 'start'), track = bar.closest('.gantt-track'), rect = track.getBoundingClientRect(), originX = event.clientX, originStart = item.actualStart, originEnd = item.actualEnd;
+        beginGanttHistory(draft);
+        bar.classList.add('gantt-dragging');
+        const onMove = moveEvent => {
+          item.actualStart = originStart;
+          item.actualEnd = originEnd;
+          moveGanttActualItem(draft, item, Math.round((moveEvent.clientX - originX) / Math.max(1, rect.width) * draft.spanDays), mode);
+          renderGanttDraft(draft);
+        };
+        const onEnd = () => {
+          bar.classList.remove('gantt-dragging');
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onEnd);
+          if (item.actualStart === originStart && item.actualEnd === originEnd) draft.history.pop();
+          renderGanttDraft(draft);
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onEnd, { once: true });
+      });
+    });
   }
 
   function enhanceProjectGantt(p, tasks) {
@@ -688,12 +762,13 @@
       if (task.milestone === 'true') track.insertAdjacentHTML('beforeend', `<i class="enterprise-milestone" style="left:${pos(task.end)}%" title="Kilometre taşı: ${esc(task.milestoneName || task.title)}"></i>`);
       if (task.actualStart) {
         const actualEnd = task.actualEnd || todayIso(), left = pos(task.actualStart), right = pos(actualEnd);
-        track.insertAdjacentHTML('beforeend', `<span class="actual-task-range" style="left:${left}%;width:${Math.max(1, right - left)}%"></span>`);
+        track.insertAdjacentHTML('beforeend', `<span class="actual-task-range" data-gantt-task="${task.id}" style="left:${left}%;width:${Math.max(1, right - left)}%"><i class="gantt-actual-handle start" data-gantt-actual-edge="start"></i>${task.actualEnd ? '<i class="gantt-actual-handle end" data-gantt-actual-edge="end"></i>' : ''}</span>`);
       }
       const dependency = task.predecessorId ? ` · Bağlı: ${taskName(task.predecessorId)}` : '';
       const actual = task.actualStart ? ` · Gerçek: ${date(task.actualStart)}${task.actualEnd ? `–${date(task.actualEnd)}` : '–devam'}` : '';
       label.textContent += dependency + actual;
-      items.push({ id: task.id, task, row, bar, label, suffix: dependency + actual, start: task.start, end: task.end, order: index, savedStart: task.start, savedEnd: task.end, savedOrder: Number.isFinite(+task.ganttOrder) ? +task.ganttOrder : index });
+      const actualBar = track.querySelector('.actual-task-range');
+      items.push({ id: task.id, task, row, bar, actualBar, label, dependency, start: task.start, end: task.end, actualStart: task.actualStart || '', actualEnd: task.actualEnd || '', order: index, savedStart: task.start, savedEnd: task.end, savedActualStart: task.actualStart || '', savedActualEnd: task.actualEnd || '', savedOrder: Number.isFinite(+task.ganttOrder) ? +task.ganttOrder : index });
     });
     ganttPlanDraft = { panel, project: p, items, editing: false, history: [], spanDays: Math.max(1, ganttDays(p.start, p.end)) };
     ganttPlanDraft.initial = ganttSnapshot(ganttPlanDraft);

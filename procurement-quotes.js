@@ -22,6 +22,7 @@
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(+value || 0);
+  const managedList = (key, fallback) => window.PolProLists?.get?.(key, fallback) || fallback;
   const calculateQuote = (lines, vatRate) => {
     const gross = lines.reduce((sum, line) => sum + ((+line.quantity || 0) * (+line.unitPrice || 0)), 0);
     const net = lines.reduce((sum, line) => {
@@ -177,7 +178,7 @@
             <summary>Ek teklif bilgileri</summary>
             <div class="quote-form-grid">
               <label>Geçerlilik tarihi<input name="validUntil" type="date"></label>
-              <label>Durum<select name="status"><option>Taslak</option><option>Gönderildi</option><option>Değerlendiriliyor</option><option>Revizyon İstendi</option><option>Onaylandı</option><option>Reddedildi</option></select></label>
+              <label>Durum<select name="status">${managedList('quoteStatuses', ['Taslak', 'Gönderildi', 'Değerlendiriliyor', 'Revizyon İstendi', 'Onaylandı', 'Reddedildi']).map(status => `<option>${escapeHtml(status)}</option>`).join('')}</select></label>
               <label class="full">Harici belge bağlantısı<input name="documentUrl" type="url" placeholder="https://..."></label>
               <label class="full">Notlar<textarea name="notes" rows="2"></textarea></label>
             </div>
@@ -502,7 +503,7 @@
         <td><input data-line-field="materialCode" value="${escapeHtml(line.materialCode)}" maxlength="80" placeholder="Kod"></td>
         <td><input data-line-field="description" value="${escapeHtml(line.description)}" maxlength="180" placeholder="Malzeme tanımı" required><textarea data-line-field="technicalSpec" rows="2" placeholder="Teknik özellik">${escapeHtml(line.technicalSpec)}</textarea></td>
         <td><input data-line-field="quantity" type="number" min="0.01" step="0.01" value="${+line.quantity || 1}" required></td>
-        <td><select data-line-field="unit">${['Adet', 'Takım', 'Metre', 'Kg', 'Litre', 'Paket', 'Hizmet'].map(unit => `<option ${line.unit === unit ? 'selected' : ''}>${unit}</option>`).join('')}</select></td>
+        <td><select data-line-field="unit">${managedList('purchaseUnits', ['Adet', 'Takım', 'Metre', 'Kg', 'Litre', 'Paket', 'Hizmet']).map(unit => `<option ${line.unit === unit ? 'selected' : ''}>${escapeHtml(unit)}</option>`).join('')}</select></td>
         <td><input data-line-field="unitPrice" type="number" min="0" step="0.01" value="${+line.unitPrice || 0}" required></td>
         <td><input data-line-field="discountRate" type="number" min="0" max="100" step="0.01" value="${+line.discountRate || 0}"></td>
         <td class="right quote-line-total">${quoteMoney(net, currency)}</td>
@@ -712,7 +713,7 @@
         const missing = Math.max(0, (+item.quantity || 0) - (+item.receivedQuantity || 0));
         const isClosed = ['Gerçekleşti', 'İptal edildi'].includes(item.procurementStatus);
         const late = !isClosed && item.dueDate && item.dueDate < todayIso() && missing > 0;
-        const statusOptions = ['Sipariş verildi', 'Kısmi teslim', 'Gerçekleşti', 'İptal edildi']
+        const statusOptions = managedList('procurementStatuses', ['Sipariş verildi', 'Kısmi teslim', 'Gerçekleşti', 'İptal edildi'])
           .map(status => `<option ${item.procurementStatus === status ? 'selected' : ''}>${status}</option>`).join('');
         const action = !isClosed
           ? `<button class="edit permission-edit" type="button" data-edit-procurement="${item.id}" title="Satın alma bilgilerini düzenle">✎</button>`

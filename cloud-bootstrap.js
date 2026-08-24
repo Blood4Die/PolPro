@@ -1,10 +1,11 @@
 (function () {
   const backend = window.PolatProBackend;
   const appScripts = [
-    'app.js?v=20260824-gantt-4',
-    'enterprise.js?v=20260824-gantt-4',
-    'procurement-quotes.js?v=20260817-lifecycle-3',
-    'isg-risk.js?v=20260723-2',
+    'app.js?v=20260824-lists-1',
+    'list-settings.js?v=20260824-1',
+    'enterprise.js?v=20260824-gantt-actual-1',
+    'procurement-quotes.js?v=20260824-lists-1',
+    'isg-risk.js?v=20260824-lists-1',
     'kedi-kumu-plan.js?v=20260722-cloud-1',
     'account-admin.js?v=20260722-cloud-1'
   ];
