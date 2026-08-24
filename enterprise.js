@@ -60,6 +60,12 @@
     record.resourceGroup ??= 'Mekanik Tasarım';
     record.effortHours ??= 8;
   });
+  data.projects.forEach(projectRecord => {
+    data.tasks
+      .filter(task => +task.projectId === +projectRecord.id)
+      .sort((a, b) => String(a.start || '').localeCompare(String(b.start || '')) || String(a.id).localeCompare(String(b.id)))
+      .forEach((task, index) => { if (!Number.isFinite(+task.ganttOrder)) task.ganttOrder = index; });
+  });
   data.costs.forEach(record => {
     record.budgetAmount ??= 0;
     record.orderedAmount ??= 0;
@@ -482,15 +488,202 @@
     }).map(task => String(task.id)));
   }
 
+  let ganttPlanDraft = null;
+  const ganttDayMs = 86400000;
+  const ganttIso = value => {
+    const point = value instanceof Date || typeof value === 'number' ? new Date(value) : new Date(value + 'T12:00:00');
+    return `${point.getFullYear()}-${String(point.getMonth() + 1).padStart(2, '0')}-${String(point.getDate()).padStart(2, '0')}`;
+  };
+  const ganttAddDays = (value, amount) => ganttIso(new Date(value + 'T12:00:00').getTime() + amount * ganttDayMs);
+  const ganttDays = (from, to) => Math.round((new Date(to + 'T12:00:00') - new Date(from + 'T12:00:00')) / ganttDayMs);
+  const ganttTaskSort = (a, b) => (Number.isFinite(+a.ganttOrder) ? +a.ganttOrder : Number.MAX_SAFE_INTEGER) - (Number.isFinite(+b.ganttOrder) ? +b.ganttOrder : Number.MAX_SAFE_INTEGER) || String(a.start || '').localeCompare(String(b.start || ''));
+
+  function ganttSnapshot(draft) {
+    return draft.items.map(item => ({ id: item.id, start: item.start, end: item.end, order: item.order }));
+  }
+
+  function ganttRestoreSnapshot(draft, snapshot) {
+    snapshot.forEach(saved => {
+      const item = draft.items.find(candidate => String(candidate.id) === String(saved.id));
+      if (item) Object.assign(item, saved);
+    });
+  }
+
+  function ganttDraftChanges(draft) {
+    return draft.items.filter(item => item.start !== item.savedStart || item.end !== item.savedEnd || item.order !== item.savedOrder);
+  }
+
+  function renderGanttDraft(draft) {
+    const panel = draft.panel, chart = panel.querySelector('.project-plan-gantt'), projectRow = chart?.querySelector('.project-row');
+    if (!chart || !projectRow) return;
+    const ordered = [...draft.items].sort((a, b) => a.order - b.order);
+    ordered.forEach((item, index) => {
+      item.order = index;
+      projectRow.parentNode.appendChild(item.row);
+      const left = Math.max(0, Math.min(100, ganttDays(draft.project.start, item.start) / draft.spanDays * 100));
+      const right = Math.max(0, Math.min(100, ganttDays(draft.project.start, item.end) / draft.spanDays * 100));
+      item.bar.style.left = `${left}%`;
+      item.bar.style.width = `${Math.max(.35, right - left)}%`;
+      item.bar.classList.toggle('gantt-draft-changed', item.start !== item.savedStart || item.end !== item.savedEnd);
+      item.row.classList.toggle('gantt-order-changed', item.order !== item.savedOrder);
+      item.row.querySelector('[data-gantt-order="-1"]').disabled = index === 0;
+      item.row.querySelector('[data-gantt-order="1"]').disabled = index === ordered.length - 1;
+      item.label.textContent = `${item.task.assignee} · ${date(item.start)} – ${date(item.end)}${item.suffix}`;
+      item.bar.setAttribute('aria-label', `${item.task.title}: ${date(item.start)} – ${date(item.end)}`);
+    });
+    const changes = ganttDraftChanges(draft), list = panel.querySelector('#ganttPlanChangeList'), box = panel.querySelector('.gantt-plan-changes'), undo = panel.querySelector('#ganttPlanUndo'), saveButton = panel.querySelector('#ganttPlanSave');
+    undo.disabled = !draft.history.length;
+    saveButton.disabled = !changes.length;
+    box.hidden = !draft.editing;
+    list.innerHTML = changes.length ? changes.map(item => {
+      const dateChange = item.start !== item.savedStart || item.end !== item.savedEnd ? `<span><b>${date(item.savedStart)} – ${date(item.savedEnd)}</b><i>→</i><strong>${date(item.start)} – ${date(item.end)}</strong></span>` : '';
+      const orderChange = item.order !== item.savedOrder ? `<small>Sıra: ${item.savedOrder + 1} → ${item.order + 1}</small>` : '';
+      return `<div><em>${esc(item.task.title)}</em>${dateChange}${orderChange}</div>`;
+    }).join('') : '<p>Henüz değiştirilmiş görev yok.</p>';
+    panel.querySelector('#ganttPlanChangeCount').textContent = `${changes.length} değişiklik`;
+  }
+
+  function setGanttEditMode(draft, enabled, discard = false) {
+    if (discard) {
+      ganttRestoreSnapshot(draft, draft.initial);
+      draft.history.length = 0;
+    }
+    draft.editing = enabled;
+    draft.panel.classList.toggle('gantt-plan-editing', enabled);
+    draft.panel.querySelector('#ganttPlanEdit').hidden = enabled;
+    draft.panel.querySelector('.gantt-plan-edit-strip').hidden = !enabled;
+    draft.panel.querySelector('#ganttPlanStatus').textContent = enabled ? 'Düzenleme modu açık. Çubuğu taşıyın, uçlarından süreyi değiştirin veya oklarla görev sırasını düzenleyin.' : 'İnceleme modu. Tarihler yanlışlıkla değiştirilemez.';
+    draft.items.forEach(item => { item.bar.tabIndex = enabled ? 0 : -1; });
+    renderGanttDraft(draft);
+  }
+
+  function beginGanttHistory(draft) {
+    draft.history.push(ganttSnapshot(draft));
+    if (draft.history.length > 30) draft.history.shift();
+  }
+
+  function moveGanttItem(draft, item, days, mode) {
+    if (!days) return;
+    if (mode === 'start') {
+      item.start = ganttAddDays(item.start, days);
+      if (item.start < draft.project.start) item.start = draft.project.start;
+      if (item.start > item.end) item.start = item.end;
+    } else if (mode === 'end') {
+      item.end = ganttAddDays(item.end, days);
+      if (item.end > draft.project.end) item.end = draft.project.end;
+      if (item.end < item.start) item.end = item.start;
+    } else {
+      const duration = ganttDays(item.start, item.end);
+      let start = ganttAddDays(item.start, days), end = ganttAddDays(item.end, days);
+      if (start < draft.project.start) { start = draft.project.start; end = ganttAddDays(start, duration); }
+      if (end > draft.project.end) { end = draft.project.end; start = ganttAddDays(end, -duration); }
+      item.start = start;
+      item.end = end;
+    }
+  }
+
+  function bindGanttPlanEditor(draft) {
+    const panel = draft.panel;
+    panel.querySelector('#ganttPlanEdit').onclick = () => setGanttEditMode(draft, true);
+    panel.querySelector('#ganttPlanUndo').onclick = () => {
+      const snapshot = draft.history.pop();
+      if (snapshot) { ganttRestoreSnapshot(draft, snapshot); renderGanttDraft(draft); }
+    };
+    panel.querySelectorAll('[data-gantt-discard]').forEach(button => button.onclick = () => {
+      if (ganttDraftChanges(draft).length && !confirm('Kaydedilmemiş Gantt değişiklikleri silinsin mi?')) return;
+      setGanttEditMode(draft, false, true);
+    });
+    panel.querySelector('#ganttPlanSave').onclick = () => {
+      const changes = ganttDraftChanges(draft);
+      if (!changes.length) return;
+      changes.forEach(item => {
+        item.task.start = item.start;
+        item.task.end = item.end;
+        item.task.ganttOrder = item.order;
+      });
+      const dateCount = changes.filter(item => item.start !== item.savedStart || item.end !== item.savedEnd).length;
+      const orderCount = changes.filter(item => item.order !== item.savedOrder).length;
+      addActivity(draft.project.id, 'Gantt planı güncellendi', `${dateCount} görev tarihi, ${orderCount} görev sırası değiştirildi.`, 'task');
+      draft.editing = false;
+      draft.cleanup?.();
+      ganttPlanDraft = null;
+      save();
+      renderProjectDetail();
+      toast('Gantt değişiklikleri kaydedildi.');
+    };
+    panel.querySelectorAll('[data-gantt-order]').forEach(button => button.onclick = event => {
+      event.stopPropagation();
+      if (!draft.editing) return;
+      const item = draft.items.find(candidate => String(candidate.id) === String(button.closest('.task-gantt-row')?.dataset.ganttTask));
+      const ordered = [...draft.items].sort((a, b) => a.order - b.order), index = ordered.indexOf(item), nextIndex = index + +button.dataset.ganttOrder;
+      if (!item || nextIndex < 0 || nextIndex >= ordered.length) return;
+      beginGanttHistory(draft);
+      const other = ordered[nextIndex], oldOrder = item.order;
+      item.order = other.order;
+      other.order = oldOrder;
+      renderGanttDraft(draft);
+    });
+    const handleGanttClick = event => {
+      const clickedBar = event.target.closest('.task-range');
+      if (!clickedBar) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!draft.editing && clickedBar.dataset.ganttTask) openDialog('task', clickedBar.dataset.ganttTask);
+    };
+    panel.addEventListener('click', handleGanttClick, true);
+    draft.cleanup = () => panel.removeEventListener('click', handleGanttClick, true);
+    panel.querySelectorAll('.task-range').forEach(bar => {
+      bar.addEventListener('keydown', event => {
+        if (!draft.editing || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const item = draft.items.find(candidate => String(candidate.id) === String(bar.dataset.ganttTask));
+        beginGanttHistory(draft);
+        moveGanttItem(draft, item, event.key === 'ArrowRight' ? 1 : -1, event.shiftKey ? 'end' : 'move');
+        renderGanttDraft(draft);
+      });
+      bar.addEventListener('pointerdown', event => {
+        if (!draft.editing || event.button !== 0) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const item = draft.items.find(candidate => String(candidate.id) === String(bar.dataset.ganttTask));
+        const mode = event.target.closest('[data-gantt-edge]')?.dataset.ganttEdge || 'move', track = bar.closest('.gantt-track'), rect = track.getBoundingClientRect(), originX = event.clientX, originStart = item.start, originEnd = item.end;
+        beginGanttHistory(draft);
+        bar.classList.add('gantt-dragging');
+        const onMove = moveEvent => {
+          item.start = originStart;
+          item.end = originEnd;
+          moveGanttItem(draft, item, Math.round((moveEvent.clientX - originX) / Math.max(1, rect.width) * draft.spanDays), mode);
+          renderGanttDraft(draft);
+        };
+        const onEnd = () => {
+          bar.classList.remove('gantt-dragging');
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onEnd);
+          if (item.start === originStart && item.end === originEnd) draft.history.pop();
+          renderGanttDraft(draft);
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onEnd, { once: true });
+      });
+    });
+  }
+
   function enhanceProjectGantt(p, tasks) {
     const panel = $('#detailPlan'), rows = panel?.querySelectorAll('.task-gantt-row');
     if (!panel || !rows?.length) return;
-    const sorted = [...tasks].sort((a, b) => a.start.localeCompare(b.start)), critical = criticalTaskIds(p, sorted), start = new Date(p.start + 'T12:00:00'), end = new Date(p.end + 'T12:00:00'), span = Math.max(86400000, end - start), pos = value => Math.max(0, Math.min(100, (new Date(value + 'T12:00:00') - start) / span * 100));
-    panel.querySelector('.file-toolbar')?.insertAdjacentHTML('beforeend', '<div class="gantt-enterprise-legend"><span class="planned-key">Plan</span><span class="actual-key">Gerçekleşen</span><span class="critical-key">Kritik yol</span><span class="milestone-key">Kilometre taşı</span></div>');
+    panel._ganttPlanCleanup?.();
+    panel._ganttPlanCleanup = null;
+    const sorted = [...tasks].sort(ganttTaskSort), critical = criticalTaskIds(p, sorted), start = new Date(p.start + 'T12:00:00'), end = new Date(p.end + 'T12:00:00'), span = Math.max(ganttDayMs, end - start), pos = value => Math.max(0, Math.min(100, (new Date(value + 'T12:00:00') - start) / span * 100));
+    panel.querySelector('.file-toolbar')?.insertAdjacentHTML('afterend', '<div class="gantt-plan-controls"><div class="gantt-enterprise-legend"><span class="planned-key">Plan</span><span class="actual-key">Gerçekleşen</span><span class="critical-key">Kritik yol</span><span class="milestone-key">Kilometre taşı</span></div><button class="secondary permission-edit" id="ganttPlanEdit">Planı düzenle</button></div><div class="gantt-plan-edit-strip" hidden><span><b>Düzenleme modu</b><small id="ganttPlanChangeCount">0 değişiklik</small></span><div><button class="secondary" id="ganttPlanUndo" disabled>Geri al</button><button class="secondary" data-gantt-discard>Düzenlemeden çık</button></div></div>');
+    panel.querySelector('.gantt-panel')?.insertAdjacentHTML('afterend', '<div class="gantt-plan-changes" hidden><div class="gantt-plan-change-head"><strong>Kaydedilecek değişiklikler</strong><small>Tüm değişiklikler tek seferde kaydedilir.</small></div><div id="ganttPlanChangeList"></div><div class="gantt-plan-actions"><button class="secondary" data-gantt-discard>Vazgeç</button><button class="primary" id="ganttPlanSave" disabled>Değişiklikleri kaydet</button></div></div><p class="gantt-plan-status" id="ganttPlanStatus">İnceleme modu. Tarihler yanlışlıkla değiştirilemez.</p>');
+    const items = [];
     rows.forEach((row, index) => {
-      const task = sorted[index], bar = row.querySelector('.task-range'), track = row.querySelector('.gantt-track'), label = row.querySelector('.gantt-label small');
-      if (!task || !bar || !track) return;
+      const task = sorted[index], bar = row.querySelector('.task-range'), track = row.querySelector('.gantt-track'), label = row.querySelector('.gantt-label small'), labelBox = row.querySelector('.gantt-label');
+      if (!task || !bar || !track || !label) return;
+      row.dataset.ganttTask = task.id;
       bar.dataset.ganttTask = task.id;
+      bar.insertAdjacentHTML('beforeend', '<i class="gantt-resize-handle start" data-gantt-edge="start"></i><i class="gantt-resize-handle end" data-gantt-edge="end"></i>');
+      labelBox.insertAdjacentHTML('beforeend', '<span class="gantt-order-controls"><button type="button" data-gantt-order="-1" aria-label="Görevi yukarı taşı">↑</button><button type="button" data-gantt-order="1" aria-label="Görevi aşağı taşı">↓</button></span>');
       if (critical.has(String(task.id))) bar.classList.add('critical-path');
       if (task.milestone === 'true') track.insertAdjacentHTML('beforeend', `<i class="enterprise-milestone" style="left:${pos(task.end)}%" title="Kilometre taşı: ${esc(task.milestoneName || task.title)}"></i>`);
       if (task.actualStart) {
@@ -500,7 +693,13 @@
       const dependency = task.predecessorId ? ` · Bağlı: ${taskName(task.predecessorId)}` : '';
       const actual = task.actualStart ? ` · Gerçek: ${date(task.actualStart)}${task.actualEnd ? `–${date(task.actualEnd)}` : '–devam'}` : '';
       label.textContent += dependency + actual;
+      items.push({ id: task.id, task, row, bar, label, suffix: dependency + actual, start: task.start, end: task.end, order: index, savedStart: task.start, savedEnd: task.end, savedOrder: Number.isFinite(+task.ganttOrder) ? +task.ganttOrder : index });
     });
+    ganttPlanDraft = { panel, project: p, items, editing: false, history: [], spanDays: Math.max(1, ganttDays(p.start, p.end)) };
+    ganttPlanDraft.initial = ganttSnapshot(ganttPlanDraft);
+    bindGanttPlanEditor(ganttPlanDraft);
+    panel._ganttPlanCleanup = ganttPlanDraft.cleanup;
+    setGanttEditMode(ganttPlanDraft, false);
   }
 
   const baseRenderProjects = renderProjects;
