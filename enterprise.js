@@ -519,6 +519,7 @@
   renderProjectPlan = function (p, tasks) {
     baseRenderProjectPlan(p, tasks);
     enhanceProjectGantt(p, tasks);
+    bindGanttTaskEditing($('#detailPlan'));
   };
 
   const baseRenderProjectDetail = renderProjectDetail;
