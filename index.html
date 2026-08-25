@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="enterprise.css?v=20260825-gantt-controls-1">
   <link rel="stylesheet" href="procurement-quotes.css?v=20260817-lifecycle-3">
   <link rel="stylesheet" href="isg-risk.css?v=20260723-2">
+  <link rel="stylesheet" href="overview-dashboard.css?v=20260825-1">
 </head>
 <body class="logged-out">
   <section id="loginScreen" class="login-screen" aria-hidden="false">
@@ -68,16 +69,17 @@
 
     <main>
       <section id="dashboard" class="page active">
-        <div class="welcome"><div><h2>Projelerin kontrol altında.</h2><p>İlerleme, yaklaşan işler ve bütçe durumunu tek ekrandan takip et.</p></div><div class="pulse"><i></i> Sistem güncel</div></div>
+        <div class="welcome"><div><h2>Proje portföyü</h2><p>Öncelik gerektiren işleri, proje sağlığını ve mali durumu tek ekrandan izleyin.</p></div><div class="pulse"><i></i> Canlı yönetim özeti</div></div>
         <div class="metrics" id="metrics"></div>
-        <div class="management-summary" id="managementSummary"></div>
-        <div class="dashboard-grid">
-          <article class="panel wide"><div class="panel-head"><div><p class="kicker">PORTFÖY</p><h3>Aktif projeler</h3></div><div class="panel-actions"><select id="dashboardProjectFilter" class="compact-select"><option value="">Tüm projeler</option></select><button class="link" data-go="projects">Tümünü gör →</button></div></div><div id="projectOverview"></div></article>
-          <article class="panel"><div class="panel-head"><div><p class="kicker">BÜTÇE</p><h3>Maliyet dağılımı</h3></div></div><div id="costChart"></div></article>
-          <article class="panel wide"><div class="panel-head"><div><p class="kicker">YAKLAŞAN</p><h3>Öncelikli görevler</h3></div><button class="link" data-go="projects">Projelere git →</button></div><div id="upcomingTasks"></div></article>
-          <article class="panel"><div class="panel-head"><div><p class="kicker">HAREKETLER</p><h3>Son maliyetler</h3></div></div><div id="recentCosts"></div></article>
-          <article class="panel dashboard-gantt-card"><div class="panel-head"><div><p class="kicker">PORTFÖY PLANI</p><h3>Gantt şeması</h3></div><button class="link" data-go="planning">Planlamaya git →</button></div><div id="dashboardGantt" class="dashboard-gantt"></div></article>
+        <div class="overview-dashboard-grid">
+          <article class="panel overview-attention-card"><div class="panel-head"><div><p class="kicker">ÖNCELİK</p><h3>Dikkat gerekenler</h3></div><div class="panel-actions"><select id="dashboardProjectFilter" class="compact-select"><option value="">Tüm projeler</option></select><button class="link" id="clearAttentionFilter" type="button" hidden>Tüm uyarılar</button></div></div><div id="attentionSummary" class="attention-summary"></div><div id="attentionList" class="attention-list"></div></article>
+          <article class="panel overview-health-card"><div class="panel-head"><div><p class="kicker">PORTFÖY</p><h3>Proje sağlık durumu</h3></div><button class="link" data-go="projects">Tüm projeler →</button></div><div id="projectOverview" class="project-health-list"></div></article>
+          <article class="panel overview-budget-card"><div class="panel-head"><div><p class="kicker">BÜTÇE VE SATIN ALMA</p><h3>Bütçe akışı</h3></div></div><div id="budgetFlow"></div></article>
+          <article class="panel overview-calendar-card"><div class="panel-head"><div><p class="kicker">ÖNÜMÜZDEKİ 30 GÜN</p><h3>Yaklaşan tarihler</h3></div></div><div id="upcomingCalendar" class="overview-calendar"></div></article>
+          <article class="panel overview-activity-card"><div class="panel-head"><div><p class="kicker">DENETİM İZİ</p><h3>Son hareketler</h3></div><span id="activityScopeLabel" class="panel-note"></span></div><div id="recentActivity" class="overview-activity"></div></article>
+          <article class="panel overview-gantt-card"><div class="panel-head overview-gantt-head"><div><p class="kicker">PORTFÖY PLANI</p><h3>Gantt görünümü</h3></div><div class="overview-gantt-actions"><div class="overview-segmented" id="dashboardGanttRange"><button type="button" data-dashboard-range="month">Bu ay</button><button type="button" data-dashboard-range="90" class="active">3 ay</button><button type="button" data-dashboard-range="180">6 ay</button><button type="button" data-dashboard-range="fit">Tümü</button></div><select id="dashboardGanttFilter" class="compact-select"><option value="all">Tüm görevler</option><option value="late">Yalnız gecikenler</option><option value="critical">Yalnız kritik yol</option></select><button class="secondary overview-collapse" id="dashboardGanttCollapse" type="button">Daralt</button><button class="link" data-go="planning">Planlamaya git →</button></div></div><div id="dashboardGantt" class="dashboard-gantt"></div></article>
         </div>
+        <div class="overview-legacy-sinks" hidden aria-hidden="true"><div id="costChart"></div><div id="upcomingTasks"></div><div id="recentCosts"></div></div>
       </section>
 
       <section id="projects" class="page">
@@ -151,6 +153,6 @@
   <script src="config.js?v=20260720-6"></script>
   <script src="preflight.js?v=20260722-cloud-1"></script>
   <script src="backend.js?v=20260722-cloud-2"></script>
-  <script src="cloud-bootstrap.js?v=20260825-gantt-controls-1"></script>
+  <script src="cloud-bootstrap.js?v=20260825-dashboard-1"></script>
 </body>
 </html>

@@ -641,7 +641,14 @@
       const dateCount = changes.filter(item => item.start !== item.savedStart || item.end !== item.savedEnd).length;
       const actualCount = changes.filter(item => item.actualStart !== item.savedActualStart || item.actualEnd !== item.savedActualEnd).length;
       const orderCount = changes.filter(item => item.order !== item.savedOrder).length;
-      addActivity(draft.project.id, 'Gantt planı güncellendi', `${dateCount} plan tarihi, ${actualCount} gerçekleşen tarih, ${orderCount} görev sırası değiştirildi.`, 'task');
+      const details = changes.slice(0, 4).map(item => {
+        const parts = [];
+        if (item.start !== item.savedStart || item.end !== item.savedEnd) parts.push(`Plan ${date(item.savedStart)}–${date(item.savedEnd)} → ${date(item.start)}–${date(item.end)}`);
+        if (item.actualStart !== item.savedActualStart || item.actualEnd !== item.savedActualEnd) parts.push(`Gerçek ${item.savedActualStart ? date(item.savedActualStart) : 'boş'}–${item.savedActualEnd ? date(item.savedActualEnd) : 'devam'} → ${item.actualStart ? date(item.actualStart) : 'boş'}–${item.actualEnd ? date(item.actualEnd) : 'devam'}`);
+        if (item.order !== item.savedOrder) parts.push(`Sıra ${item.savedOrder + 1} → ${item.order + 1}`);
+        return `${item.task.title}: ${parts.join(', ')}`;
+      }).join(' · ');
+      addActivity(draft.project.id, 'Gantt planı güncellendi', details || `${dateCount} plan tarihi, ${actualCount} gerçekleşen tarih, ${orderCount} görev sırası değiştirildi.`, 'task');
       draft.editing = false;
       draft.cleanup?.();
       ganttPlanDraft = null;
