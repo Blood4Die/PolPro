@@ -562,6 +562,7 @@
     draft.panel.classList.toggle('gantt-plan-editing', enabled);
     draft.panel.querySelector('#ganttPlanEdit').hidden = enabled;
     draft.panel.querySelector('.gantt-plan-edit-strip').hidden = !enabled;
+    draft.panel.querySelectorAll('.gantt-order-controls').forEach(control => { control.hidden = !enabled; });
     draft.panel.querySelector('#ganttPlanStatus').textContent = enabled ? 'Düzenleme modu açık. Gri plan çubuğunu veya yeşil gerçekleşen çubuğunu ayrı ayrı düzenleyebilirsiniz.' : 'İnceleme modu. Tarihler yanlışlıkla değiştirilemez.';
     draft.items.forEach(item => { item.bar.tabIndex = enabled ? 0 : -1; if (item.actualBar) item.actualBar.tabIndex = enabled ? 0 : -1; });
     renderGanttDraft(draft);
@@ -757,7 +758,7 @@
       row.dataset.ganttTask = task.id;
       bar.dataset.ganttTask = task.id;
       bar.insertAdjacentHTML('beforeend', '<i class="gantt-resize-handle start" data-gantt-edge="start"></i><i class="gantt-resize-handle end" data-gantt-edge="end"></i>');
-      labelBox.insertAdjacentHTML('beforeend', '<span class="gantt-order-controls"><button type="button" data-gantt-order="-1" aria-label="Görevi yukarı taşı">↑</button><button type="button" data-gantt-order="1" aria-label="Görevi aşağı taşı">↓</button></span>');
+      labelBox.insertAdjacentHTML('beforeend', '<span class="gantt-order-controls" hidden><button type="button" data-gantt-order="-1" aria-label="Görevi yukarı taşı">↑</button><button type="button" data-gantt-order="1" aria-label="Görevi aşağı taşı">↓</button></span>');
       if (critical.has(String(task.id))) bar.classList.add('critical-path');
       if (task.milestone === 'true') track.insertAdjacentHTML('beforeend', `<i class="enterprise-milestone" style="left:${pos(task.end)}%" title="Kilometre taşı: ${esc(task.milestoneName || task.title)}"></i>`);
       if (task.actualStart) {

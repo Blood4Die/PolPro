@@ -3,7 +3,7 @@
   const appScripts = [
     'app.js?v=20260824-lists-1',
     'list-settings.js?v=20260824-1',
-    'enterprise.js?v=20260824-gantt-actual-1',
+    'enterprise.js?v=20260825-gantt-controls-1',
     'procurement-quotes.js?v=20260824-lists-1',
     'isg-risk.js?v=20260824-lists-1',
     'kedi-kumu-plan.js?v=20260722-cloud-1',
