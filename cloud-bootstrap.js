@@ -8,7 +8,7 @@
     'isg-risk.js?v=20260824-lists-1',
     'kedi-kumu-plan.js?v=20260722-cloud-1',
     'account-admin.js?v=20260722-cloud-1',
-    'overview-dashboard.js?v=20260825-2'
+    'overview-dashboard.js?v=20260825-3'
   ];
 
   const loadScript = src => new Promise((resolve, reject) => {
